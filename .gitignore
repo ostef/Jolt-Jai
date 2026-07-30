@@ -1,0 +1,6 @@
+.build
+.vscode
+Libs
+*.so
+*.dll
+Examples/hello_world

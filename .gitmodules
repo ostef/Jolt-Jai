@@ -1,0 +1,6 @@
+[submodule "Source/JoltC"]
+	path = Source/JoltC
+	url = ssh://git@github.com/ostef/JoltC
+[submodule "Source/JoltC-BindGen"]
+	path = Source/JoltC-BindGen
+	url = ssh://git@github.com/ostef/JoltC-BindGen
