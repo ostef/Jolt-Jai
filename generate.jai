@@ -69,9 +69,6 @@ GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool) -> bool {
     result = sprint("COMBINED_SHARED_LIBS :: %1;\n\n%2", combined_shared_libs, result);
     write_entire_file("jolt.jai", result);
 
-    make_directory_if_it_does_not_exist("Examples");
-    copy_file("Source/JoltC-BindGen/Jai/hello_world.jai", "Examples/hello_world.jai");
-
     return true;
 }
 
