@@ -3,6 +3,20 @@
 // To compile Jolt Physics and JoltC run `jai generate.jai - build`
 // To compile as a shared library use the combined_shared_libs option
 
+JoltFeatureFlags :: enum_flags {
+    DoublePrecision;
+    CrossPlatformDeterministic;
+    FloatingPointExceptionsEnabled;
+    ProfileEnabled;
+    ExternalProfile;
+    DebugRenderer;
+    DisableTempAllocator;
+    DisableCustomAllocator;
+    ObjectLayer32Bits;
+    EnableAsserts;
+    ObjectStream;
+}
+
 #run {
     set_build_options_dc(.{do_output=false});
 
@@ -10,6 +24,7 @@
     shared_libs := false;
     combined_shared_libs := false;
     build_type := "Debug";
+    jolt_features : JoltFeatureFlags;
 
     args := get_build_options().compile_time_command_line;
     for args {
@@ -26,21 +41,43 @@
             build_type = "Release";
         case "build_distribution";
             build_type = "Distribution";
+        case "double_precision";
+            jolt_features |= .DoublePrecision;
+        case "cross_platform_deterministic";
+            jolt_features |= .CrossPlatformDeterministic;
+        case "floating_point_exceptions_enabled";
+            jolt_features |= .FloatingPointExceptionsEnabled;
+        case "profile_enabled";
+            jolt_features |= .ProfileEnabled;
+        case "external_profile";
+            jolt_features |= .ExternalProfile;
+        case "debug_renderer";
+            jolt_features |= .DebugRenderer;
+        case "disable_temp_allocator";
+            jolt_features |= .DisableTempAllocator;
+        case "disable_custom_allocator";
+            jolt_features |= .DisableCustomAllocator;
+        case "object_layer_32bits";
+            jolt_features |= .ObjectLayer32Bits;
+        case "enable_asserts";
+            jolt_features |= .EnableAsserts;
+        case "object_stream";
+            jolt_features |= .ObjectStream;
         }
     }
 
-    if build_joltc && !BuildJoltC(shared_libs, combined_shared_libs, build_type) {
+    if build_joltc && !BuildJoltC(shared_libs, combined_shared_libs, build_type, jolt_features) {
         compiler_set_workspace_status(.FAILED);
         return;
     }
 
-    if !GenerateBindings(shared_libs, combined_shared_libs) {
+    if !GenerateBindings(shared_libs, combined_shared_libs, jolt_features) {
         compiler_set_workspace_status(.FAILED);
         return;
     }
 }
 
-GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool) -> bool {
+GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool, jolt_features : JoltFeatureFlags) -> bool {
     result : string;
 
     {
@@ -57,7 +94,47 @@ GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool) -> bool {
             return false;
         }
 
-        bindgen_status, bindgen_result, bindgen_error := run_command(".build/joltc-bindgen", "../JoltC/JoltC.h", "-l", "jai", "-I", "../JoltC", capture_and_return_output=true);
+        bindgen : [..]string;
+        array_add(*bindgen, ".build/joltc-bindgen");
+        array_add(*bindgen, "../JoltC/JoltC.h");
+        array_add(*bindgen, "-l", "jai");
+        array_add(*bindgen, "-I", "../JoltC");
+
+        if jolt_features & .DoublePrecision {
+            array_add(*bindgen, "-D", "JOLTC_DOUBLE_PRECISION");
+        }
+        if jolt_features & .CrossPlatformDeterministic {
+            array_add(*bindgen, "-D", "JOLTC_CROSS_PLATFORM_DETERMINISTIC");
+        }
+        if jolt_features & .FloatingPointExceptionsEnabled {
+            array_add(*bindgen, "-D", "JOLTC_FLOATING_POINT_EXCEPTIONS_ENABLED");
+        }
+        if jolt_features & .ProfileEnabled {
+            array_add(*bindgen, "-D", "JOLTC_PROFILE_ENABLED");
+        }
+        if jolt_features & .ExternalProfile {
+            array_add(*bindgen, "-D", "JOLTC_EXTERNAL_PROFILE");
+        }
+        if jolt_features & .DebugRenderer {
+            array_add(*bindgen, "-D", "JOLTC_DEBUG_RENDERER");
+        }
+        if jolt_features & .DisableTempAllocator {
+            array_add(*bindgen, "-D", "JOLTC_DISABLE_TEMP_ALLOCATOR");
+        }
+        if jolt_features & .DisableCustomAllocator {
+            array_add(*bindgen, "-D", "JOLTC_DISABLE_CUSTOM_ALLOCATOR");
+        }
+        if jolt_features & .ObjectLayer32Bits {
+            array_add(*bindgen, "-D", "JOLTC_OBJECT_LAYER_BITS=32");
+        }
+        if jolt_features & .EnableAsserts {
+            array_add(*bindgen, "-D", "JOLTC_ENABLE_ASSERTS");
+        }
+        if jolt_features & .ObjectStream {
+            array_add(*bindgen, "-D", "JOLTC_OBJECT_STREAM");
+        }
+
+        bindgen_status, bindgen_result, bindgen_error := run_command(..bindgen, capture_and_return_output=true);
         if bindgen_status.exit_code != 0 {
             log_error("joltc-bindgen failed:\n%", bindgen_error);
             return false;
@@ -72,7 +149,7 @@ GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool) -> bool {
     return true;
 }
 
-BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, build_type : string) -> bool {
+BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, build_type : string, jolt_features : JoltFeatureFlags) -> bool {
     {
         working_dir := get_working_directory();
         defer set_working_directory(working_dir);
@@ -88,6 +165,40 @@ BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, buil
         array_add(*configure, tprint("-DBUILD_SHARED_LIBS=%", ifx build_shared_libs then "ON" else "OFF"));
         array_add(*configure, tprint("-DJOLTC_BUILD_COMBINED_SHARED_LIBS=%", ifx build_combined_shared_libs then "ON" else "OFF"));
         array_add(*configure, tprint("-DCMAKE_BUILD_TYPE=%", build_type));
+
+        if jolt_features & .DoublePrecision {
+            array_add(*configure, "-DJPH_DOUBLE_PRECISION=ON");
+        }
+        if jolt_features & .CrossPlatformDeterministic {
+            array_add(*configure, "-DJPH_CROSS_PLATFORM_DETERMINISTIC=ON");
+        }
+        if jolt_features & .FloatingPointExceptionsEnabled {
+            array_add(*configure, "-DJPH_FLOATING_POINT_EXCEPTIONS_ENABLED=ON");
+        }
+        if jolt_features & .ProfileEnabled {
+            array_add(*configure, "-DJPH_PROFILE_ENABLED=ON");
+        }
+        if jolt_features & .ExternalProfile {
+            array_add(*configure, "-DJPH_EXTERNAL_PROFILE=ON");
+        }
+        if jolt_features & .DebugRenderer {
+            array_add(*configure, "-DJPH_DEBUG_RENDERER=ON");
+        }
+        if jolt_features & .DisableTempAllocator {
+            array_add(*configure, "-DJPH_DISABLE_TEMP_ALLOCATOR=ON");
+        }
+        if jolt_features & .DisableCustomAllocator {
+            array_add(*configure, "-DJPH_DISABLE_CUSTOM_ALLOCATOR=ON");
+        }
+        if jolt_features & .ObjectLayer32Bits {
+            array_add(*configure, "-DJPH_OBJECT_LAYER_BITS=32");
+        }
+        if jolt_features & .EnableAsserts {
+            array_add(*configure, "-DJPH_ENABLE_ASSERTS=ON");
+        }
+        if jolt_features & .ObjectStream {
+            array_add(*configure, "-DJPH_OBJECT_STREAM=ON");
+        }
 
         configure_str : string;
         for configure {

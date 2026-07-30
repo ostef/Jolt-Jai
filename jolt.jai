@@ -2,6 +2,9 @@ COMBINED_SHARED_LIBS :: true;
 
 // Defines
 
+VERSION_MAJOR :: 5;
+VERSION_MINOR :: 6;
+VERSION_PATCH :: 0;
 VERSION_FEATURE_BIT_1 :: 0;
 VERSION_FEATURE_BIT_2 :: 0;
 VERSION_FEATURE_BIT_3 :: 0;
@@ -13,6 +16,7 @@ VERSION_FEATURE_BIT_8 :: 0;
 VERSION_FEATURE_BIT_9 :: 0;
 VERSION_FEATURE_BIT_10 :: 0;
 VERSION_FEATURE_BIT_11 :: 0;
+VERSION_ID :: ((VERSION_FEATURES<<24)|(VERSION_MAJOR<<16)|(VERSION_MINOR<<8)|VERSION_PATCH);
 DEBUG :: 1;
 ENABLE_ASSERTS :: 1;
 VECTOR_ALIGNMENT :: 16;
@@ -45,6 +49,20 @@ BroadPhaseLayer :: u8;
 ObjectLayer :: u16;
 
 // Enums
+
+EFeatures :: enum_flags u64 {
+    DoublePrecision :: 1;
+    CrossPlatformDeterministic :: 2;
+    FloatingPointExceptionsEnabled :: 4;
+    ProfileEnabled :: 8;
+    ExternalProfile :: 16;
+    DebugRenderer :: 32;
+    DisableTempAllocator :: 64;
+    DisableCustomAllocator :: 128;
+    ObjectLayer32Bits :: 256;
+    EnableAsserts :: 512;
+    ObjectStream :: 1024;
+}
 
 EShapeType :: enum u8 {
     Convex :: 0;

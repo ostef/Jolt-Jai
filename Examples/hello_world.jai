@@ -12,7 +12,9 @@ BroadPhaseLayer :: enum Jolt.BroadPhaseLayer {
 }
 
 main :: () {
-    print("Jolt version ID: %\n", FormatInt.{value=Jolt.GetJoltVersionID(), base=16});
+    print("Jolt version ID: %\n", FormatInt.{value=Jolt.VERSION_ID, base=16});
+
+    Jolt.CheckVersionID();
 
     Jolt.RegisterDefaultAllocator();
     Jolt.RegisterDefaultTraceHandler();
