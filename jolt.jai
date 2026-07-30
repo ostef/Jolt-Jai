@@ -32,13 +32,13 @@ RVec3 :: Vec3;
 RMat44 :: Mat44;
 Real :: float;
 Color :: u32;
-AllocateFunction :: *#type (u64) -> *void #c_call;
-ReallocateFunction :: *#type (*void, u64, u64) -> *void #c_call;
-FreeFunction :: *#type (*void) -> void #c_call;
-AlignedAllocateFunction :: *#type (u64, u64) -> *void #c_call;
-AlignedFreeFunction :: *#type (*void) -> void #c_call;
-TraceHandler :: *#type (*s8) -> void #c_call;
-AssertFailedHandler :: *#type (*s8, *s8, *s8, u32) -> bool #c_call;
+AllocateFunction :: #type (u64) -> *void #c_call;
+ReallocateFunction :: #type (*void, u64, u64) -> *void #c_call;
+FreeFunction :: #type (*void) -> void #c_call;
+AlignedAllocateFunction :: #type (u64, u64) -> *void #c_call;
+AlignedFreeFunction :: #type (*void) -> void #c_call;
+TraceHandler :: #type (*s8) -> void #c_call;
+AssertFailedHandler :: #type (*s8, *s8, *s8, u32) -> bool #c_call;
 BodyID :: u32;
 SubShapeID :: u32;
 BroadPhaseLayer :: u8;
@@ -272,8 +272,8 @@ PhysicsSettings :: struct {
 
 JoltCAllocator :: struct {
     data : *void;
-    AllocateFunc : *#type (*void, u64) -> *void #c_call;
-    FreeFunc : *#type (*void, *void) -> void #c_call;
+    AllocateFunc : #type (*void, u64) -> *void #c_call;
+    FreeFunc : #type (*void, *void) -> void #c_call;
 
     Allocate :: (allocator : JoltCAllocator, size : u64) -> *void #foreign JoltC "JPH_JoltCAllocator_Allocate";
     Free :: (allocator : JoltCAllocator, ptr : *void) -> void #foreign JoltC "JPH_JoltCAllocator_Free";
@@ -881,9 +881,9 @@ Body :: struct {
 
 BroadPhaseLayerInterface :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        GetNumBroadPhaseLayers : *#type (*void) -> u32 #c_call;
-        GetBroadPhaseLayer : *#type (*void, ObjectLayer) -> BroadPhaseLayer #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        GetNumBroadPhaseLayers : #type (*void) -> u32 #c_call;
+        GetBroadPhaseLayer : #type (*void, ObjectLayer) -> BroadPhaseLayer #c_call;
     }
 
     opaque : s8;
@@ -913,8 +913,8 @@ BroadPhaseLayerInterfaceMask :: struct {
 
 ObjectLayerPairFilter :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        ShouldCollide : *#type (*void, ObjectLayer, ObjectLayer) -> bool #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, ObjectLayer, ObjectLayer) -> bool #c_call;
     }
 
     opaque : s8;
@@ -949,8 +949,8 @@ ObjectLayerPairFilterMask :: struct {
 
 ObjectVsBroadPhaseLayerFilter :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        ShouldCollide : *#type (*void, ObjectLayer, BroadPhaseLayer) -> bool #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, ObjectLayer, BroadPhaseLayer) -> bool #c_call;
     }
 
     opaque : s8;
@@ -975,8 +975,8 @@ ObjectVsBroadPhaseLayerFilterMask :: struct {
 
 BroadPhaseLayerFilter :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        ShouldCollide : *#type (*void, BroadPhaseLayer) -> bool #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, BroadPhaseLayer) -> bool #c_call;
     }
 
     opaque : s8;
@@ -988,8 +988,8 @@ BroadPhaseLayerFilter :: struct {
 
 ObjectLayerFilter :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        ShouldCollide : *#type (*void, ObjectLayer) -> bool #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, ObjectLayer) -> bool #c_call;
     }
 
     opaque : s8;
@@ -1005,9 +1005,9 @@ GroupFilter :: struct {
 
 BodyFilter :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        ShouldCollide : *#type (*void, BodyID) -> bool #c_call;
-        ShouldCollideLocked : *#type (*void, *Body) -> bool #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, BodyID) -> bool #c_call;
+        ShouldCollideLocked : #type (*void, *Body) -> bool #c_call;
     }
 
     opaque : s8;
@@ -1037,9 +1037,9 @@ IgnoreSingleBodyFilterChained :: struct {
 
 ShapeFilter :: struct {
     Funcs :: struct {
-        Destruct : *#type (*void) -> void #c_call;
-        ShouldCollide : *#type (*void, *Shape, SubShapeID) -> bool #c_call;
-        ShapesShouldCollide : *#type (*void, *Shape, SubShapeID, *Shape, SubShapeID) -> bool #c_call;
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, *Shape, SubShapeID) -> bool #c_call;
+        ShapesShouldCollide : #type (*void, *Shape, SubShapeID, *Shape, SubShapeID) -> bool #c_call;
     }
 
     opaque : s8;
@@ -1056,8 +1056,8 @@ ReversedShapeFilter :: struct {
 }
 
 BroadPhaseQuery :: struct {
-    CastRayHitCallback :: *#type (*void, *BroadPhaseCastResult) -> void #c_call;
-    CastRayCollectCallback :: *#type (*void, *BroadPhaseCastResult) -> float #c_call;
+    CastRayHitCallback :: #type (*void, *BroadPhaseCastResult) -> void #c_call;
+    CastRayCollectCallback :: #type (*void, *BroadPhaseCastResult) -> float #c_call;
 
     GetBounds :: (query : *BroadPhaseQuery) -> AABox #foreign JoltC "JPH_BroadPhaseQuery_GetBounds";
     CastRay :: (query : *BroadPhaseQuery, ray : RayCast, collectorType : ECollisionCollectorType, data : *void, callback : BroadPhaseQuery.CastRayHitCallback, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> bool #foreign JoltC "JPH_BroadPhaseQuery_CastRay";
