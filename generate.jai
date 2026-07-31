@@ -4,6 +4,12 @@
 // To compile as a shared library use the combined_shared_libs option
 
 JoltCompileOptions :: enum_flags {
+    BuildTypeDebug;
+    BuildTypeRelease;
+    BuildTypeDistribution;
+    SharedLibs;
+    CombinedSharedLibs;
+
     DoublePrecision;
     CrossPlatformDeterministic;
     FloatingPointExceptionsEnabled;
@@ -17,18 +23,15 @@ JoltCompileOptions :: enum_flags {
     UseAsserts;
     EnableObjectStream;
 
-    Default :: ProfilerInDebugAndRelease | DebugRendererInDebugAndRelease | EnableObjectStream;
+    Default :: BuildTypeDebug | ProfilerInDebugAndRelease | DebugRendererInDebugAndRelease | EnableObjectStream;
 }
 
 #run {
     set_build_options_dc(.{do_output=false});
 
     build_joltc := false;
-    shared_libs := false;
-    combined_shared_libs := false;
-    build_type := "Debug";
     disabled_compile_options : JoltCompileOptions;
-    jolt_compile_options := JoltCompileOptions.Default;
+    compile_options := JoltCompileOptions.Default;
 
     args := get_build_options().compile_time_command_line;
     for args {
@@ -36,70 +39,73 @@ JoltCompileOptions :: enum_flags {
         case "build";
             build_joltc = true;
         case "shared_libs";
-            shared_libs = true;
+            compile_options |= .SharedLibs;
         case "combined_shared_libs";
-            combined_shared_libs = true;
+            compile_options |= .CombinedSharedLibs;
         case "build_debug";
-            build_type = "Debug";
+            compile_options &= ~(.BuildTypeRelease | .BuildTypeDistribution);
+            compile_options |= .BuildTypeDebug;
         case "build_release";
-            build_type = "Release";
+            compile_options &= ~(.BuildTypeRelease | .BuildTypeDistribution);
+            compile_options |= .BuildTypeRelease;
         case "build_distribution";
-            build_type = "Distribution";
+            compile_options &= ~(.BuildTypeDebug | .BuildTypeRelease);
+            compile_options |= .BuildTypeDistribution;
         case "double_precision";
-            jolt_compile_options |= .DoublePrecision;
+            compile_options |= .DoublePrecision;
         case "cross_platform_deterministic";
-            jolt_compile_options |= .CrossPlatformDeterministic;
+            compile_options |= .CrossPlatformDeterministic;
         case "floating_point_exceptions_enabled";
-            jolt_compile_options |= .FloatingPointExceptionsEnabled;
+            compile_options |= .FloatingPointExceptionsEnabled;
         case "disable_custom_allocator";
-            jolt_compile_options |= .DisableCustomAllocator;
+            compile_options |= .DisableCustomAllocator;
         case "profiler_in_distribution";
-            jolt_compile_options |= .ProfilerInDistribution;
+            compile_options |= .ProfilerInDistribution;
         case "profiler_in_debug_and_release";
-            jolt_compile_options |= .ProfilerInDebugAndRelease;
+            compile_options |= .ProfilerInDebugAndRelease;
         case "no_profiler_in_debug_and_release";
             disabled_compile_options |= .ProfilerInDebugAndRelease;
         case "debug_renderer_in_distribution";
-            jolt_compile_options |= .DebugRendererInDistribution;
+            compile_options |= .DebugRendererInDistribution;
         case "debug_renderer_in_debug_and_release";
-            jolt_compile_options |= .DebugRendererInDebugAndRelease;
+            compile_options |= .DebugRendererInDebugAndRelease;
         case "no_debug_renderer_in_debug_and_release";
             disabled_compile_options |= .DebugRendererInDebugAndRelease;
         case "external_profile";
-            jolt_compile_options |= .UseExternalProfile;
+            compile_options |= .UseExternalProfile;
         case "object_layer_32bits";
-            jolt_compile_options |= .ObjectLayer32Bits;
+            compile_options |= .ObjectLayer32Bits;
         case "enable_asserts";
-            jolt_compile_options |= .UseAsserts;
+            compile_options |= .UseAsserts;
         case "disable_asserts";
             disabled_compile_options |= .UseAsserts;
         case "object_stream";
-            jolt_compile_options |= .EnableObjectStream;
+            compile_options |= .EnableObjectStream;
         case "no_object_stream";
             disabled_compile_options |= .EnableObjectStream;
         }
     }
 
     // Not tied to a specific Jolt build logic
-    if build_type == "Debug" {
-        jolt_compile_options |= .UseAsserts;
+    if compile_options & .BuildTypeDebug {
+        compile_options |= .UseAsserts;
     }
 
     // Apply disabled features
-    jolt_compile_options &= ~disabled_compile_options;
+    compile_options &= ~disabled_compile_options;
 
-    if build_joltc && !BuildJoltC(shared_libs, combined_shared_libs, build_type, jolt_compile_options) {
+    if build_joltc && !BuildJoltC(compile_options) {
         compiler_set_workspace_status(.FAILED);
         return;
     }
 
-    if !GenerateBindings(shared_libs, combined_shared_libs, build_type, jolt_compile_options) {
+    if !GenerateBindings(compile_options) {
         compiler_set_workspace_status(.FAILED);
         return;
     }
 }
 
-GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool, build_type : string, jolt_compile_options : JoltCompileOptions) -> bool {
+GenerateBindings :: (options : JoltCompileOptions) -> bool {
     result : string;
 
     {
@@ -122,45 +128,45 @@ GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool, build_type
         array_add(*bindgen, "-l", "jai");
         array_add(*bindgen, "-I", "../JoltC");
 
-        if jolt_compile_options & .DoublePrecision {
+        if options & .DoublePrecision {
             array_add(*bindgen, "-D", "JOLTC_DOUBLE_PRECISION");
         }
-        if jolt_compile_options & .CrossPlatformDeterministic {
+        if options & .CrossPlatformDeterministic {
             array_add(*bindgen, "-D", "JOLTC_CROSS_PLATFORM_DETERMINISTIC");
         }
-        if jolt_compile_options & .FloatingPointExceptionsEnabled {
+        if options & .FloatingPointExceptionsEnabled {
             array_add(*bindgen, "-D", "JOLTC_FLOATING_POINT_EXCEPTIONS_ENABLED");
         }
-        if jolt_compile_options & .ProfilerInDebugAndRelease && (build_type != "Distribution") {
-            if jolt_compile_options & .UseExternalProfile {
+        if options & .ProfilerInDebugAndRelease && !(options & .BuildTypeDistribution) {
+            if options & .UseExternalProfile {
                 array_add(*bindgen, "-D", "JOLTC_EXTERNAL_PROFILE");
             } else {
                 array_add(*bindgen, "-D", "JOLTC_PROFILE_ENABLED");
             }
         }
-        if jolt_compile_options & .ProfilerInDistribution && (build_type == "Distribution") {
-            if jolt_compile_options & .UseExternalProfile {
+        if options & .ProfilerInDistribution && (options & .BuildTypeDistribution) {
+            if options & .UseExternalProfile {
                 array_add(*bindgen, "-D", "JOLTC_EXTERNAL_PROFILE");
             } else {
                 array_add(*bindgen, "-D", "JOLTC_PROFILE_ENABLED");
             }
         }
-        if jolt_compile_options & .DebugRendererInDebugAndRelease && (build_type != "Distribution") {
+        if options & .DebugRendererInDebugAndRelease && !(options & .BuildTypeDistribution) {
             array_add(*bindgen, "-D", "JOLTC_DEBUG_RENDERER");
         }
-        if jolt_compile_options & .DebugRendererInDistribution && (build_type == "Distribution") {
+        if options & .DebugRendererInDistribution && (options & .BuildTypeDistribution) {
             array_add(*bindgen, "-D", "JOLTC_DEBUG_RENDERER");
         }
-        if jolt_compile_options & .DisableCustomAllocator {
+        if options & .DisableCustomAllocator {
             array_add(*bindgen, "-D", "JOLTC_DISABLE_CUSTOM_ALLOCATOR");
         }
-        if jolt_compile_options & .ObjectLayer32Bits {
+        if options & .ObjectLayer32Bits {
             array_add(*bindgen, "-D", "JOLTC_OBJECT_LAYER_BITS=32");
         }
-        if jolt_compile_options & .UseAsserts {
+        if options & .UseAsserts {
             array_add(*bindgen, "-D", "JOLTC_ENABLE_ASSERTS");
         }
-        if jolt_compile_options & .EnableObjectStream {
+        if options & .EnableObjectStream {
             array_add(*bindgen, "-D", "JOLTC_OBJECT_STREAM");
         }
 
@@ -173,13 +179,13 @@ GenerateBindings :: (shared_libs : bool, combined_shared_libs : bool, build_type
         result = bindgen_result;
     }
 
-    result = sprint("COMBINED_SHARED_LIBS :: %1;\n\n%2", combined_shared_libs, result);
+    result = sprint("COMBINED_SHARED_LIBS :: %1;\n\n%2", (options & .CombinedSharedLibs) != 0, result);
     write_entire_file("jolt.jai", result);
 
     return true;
 }
 
-BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, build_type : string, options : JoltCompileOptions) -> bool {
+BuildJoltC :: (options : JoltCompileOptions) -> bool {
     {
         working_dir := get_working_directory();
         defer set_working_directory(working_dir);
@@ -192,9 +198,15 @@ BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, buil
 
         configure : [..]string;
         array_add(*configure, "cmake", "-B", ".build");
-        array_add(*configure, tprint("-DBUILD_SHARED_LIBS=%", ifx build_shared_libs then "ON" else "OFF"));
-        array_add(*configure, tprint("-DJOLTC_BUILD_COMBINED_SHARED_LIBS=%", ifx build_combined_shared_libs then "ON" else "OFF"));
-        array_add(*configure, tprint("-DCMAKE_BUILD_TYPE=%", build_type));
+        array_add(*configure, tprint("-DBUILD_SHARED_LIBS=%", ifx options & .SharedLibs then "ON" else "OFF"));
+        array_add(*configure, tprint("-DJOLTC_BUILD_COMBINED_SHARED_LIBS=%", ifx options & .CombinedSharedLibs then "ON" else "OFF"));
+        if options & .BuildTypeDebug {
+            array_add(*configure, "-DCMAKE_BUILD_TYPE=Debug");
+        } else if options & .BuildTypeRelease {
+            array_add(*configure, "-DCMAKE_BUILD_TYPE=Release");
+        } else if options & .BuildTypeDistribution {
+            array_add(*configure, "-DCMAKE_BUILD_TYPE=Distribution");
+        }
 
         array_add(*configure, tprint("-DDOUBLE_PRECISION=%", ifx options & .DoublePrecision then "ON" else "OFF"));
         array_add(*configure, tprint("-DCROSS_PLATFORM_DETERMINISTIC=%", ifx options & .CrossPlatformDeterministic then "ON" else "OFF"));
@@ -253,14 +265,14 @@ BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, buil
 
         make_directory_if_it_does_not_exist("Libs/Windows", recursive=true);
 
-        if !build_combined_shared_libs {
+        if !(options & .CombinedSharedLibs) {
             if !copy_file("Source/JoltC/.build/_deps/joltphysics-build/Debug/Jolt.lib", "Libs/Windows/Jolt.lib") {
                 return false;
             }
             if !copy_file("Source/JoltC/.build/_deps/joltphysics-build/Debug/Jolt.pdb", "Libs/Windows/Jolt.pdb") {
                 return false;
             }
-            if build_shared_libs && !copy_file("Source/JoltC/.build/_deps/joltphysics-build/Debug/Jolt.dll", "Libs/Windows/Jolt.dll") {
+            if (options & .SharedLibs) && !copy_file("Source/JoltC/.build/_deps/joltphysics-build/Debug/Jolt.dll", "Libs/Windows/Jolt.dll") {
                 return false;
             }
         }
@@ -271,7 +283,7 @@ BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, buil
         if !copy_file("Source/JoltC/.build/Debug/JoltC.pdb", "Libs/Windows/JoltC.pdb") {
             return false;
         }
-        if (build_shared_libs || build_combined_shared_libs) && !copy_file("Source/JoltC/.build/Debug/JoltC.dll", "Libs/Windows/JoltC.dll") {
+        if ((options & .SharedLibs) || (options & .CombinedSharedLibs)) && !copy_file("Source/JoltC/.build/Debug/JoltC.dll", "Libs/Windows/JoltC.dll") {
             return false;
         }
     } else #if OS == .LINUX {
@@ -282,7 +294,7 @@ BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, buil
 
         make_directory_if_it_does_not_exist("Libs/Linux", recursive=true);
 
-        if !build_shared_libs && !build_combined_shared_libs {
+        if !(options & .SharedLibs) && !(options & .CombinedSharedLibs) {
             if !copy_file("Source/JoltC/.build/_deps/joltphysics-build/libJolt.a", "Libs/Linux/libJolt.a") {
                 return false;
             }
@@ -290,7 +302,7 @@ BuildJoltC :: (build_shared_libs : bool, build_combined_shared_libs : bool, buil
                 return false;
             }
         } else {
-            if !build_combined_shared_libs {
+            if !(options & .CombinedSharedLibs) {
                 if !copy_file("Source/JoltC/.build/_deps/joltphysics-build/libJolt.so", "Libs/Linux/libJolt.so") {
                     return false;
                 }
