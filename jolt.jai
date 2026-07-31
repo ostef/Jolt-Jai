@@ -175,6 +175,12 @@ EActivation :: enum u32 {
     DontActivate :: 1;
 }
 
+ESoftBodyConstraintColor :: enum u32 {
+    ConstraintType :: 0;
+    ConstraintGroup :: 1;
+    ConstraintOrder :: 2;
+}
+
 EPhysicsUpdateError :: enum_flags u32 {
     None :: 0;
     ManifoldCacheFull :: 1;
@@ -1280,6 +1286,15 @@ SoftBodySharedSettings :: struct {}
 BodyManager :: struct {
     MutexMask :: u64;
 
+    EShapeColor :: enum u32 {
+        InstanceColor :: 0;
+        ShapeTypeColor :: 1;
+        MotionTypeColor :: 2;
+        SleepColor :: 3;
+        IslandColor :: 4;
+        MaterialColor :: 5;
+    }
+
     BodyStats :: struct {
         numBodies : u32;
         maxBodies : u32;
@@ -1290,6 +1305,33 @@ BodyManager :: struct {
         numActiveBodiesKinematic : u32;
         numSoftBodies : u32;
         numActiveSoftBodies : u32;
+    }
+
+    DrawSettings :: struct {
+        drawGetSupportFunction : bool;
+        drawSupportDirection : bool;
+        drawGetSupportingFace : bool;
+        drawShape : bool;
+        drawShapeWireframe : bool;
+        drawShapeColor : BodyManager.EShapeColor;
+        drawBoundingBox : bool;
+        drawCenterOfMassTransform : bool;
+        drawWorldTransform : bool;
+        drawVelocity : bool;
+        drawMassAndInertia : bool;
+        drawSleepStats : bool;
+        drawSoftBodyVertices : bool;
+        drawSoftBodyVertexVelocities : bool;
+        drawSoftBodyEdgeConstraints : bool;
+        drawSoftBodyBendConstraints : bool;
+        drawSoftBodyVolumeConstraints : bool;
+        drawSoftBodySkinConstraints : bool;
+        drawSoftBodyLRAConstraints : bool;
+        drawSoftBodyRods : bool;
+        drawSoftBodyRodStates : bool;
+        drawSoftBodyRodBendTwistConstraints : bool;
+        drawSoftBodyPredictedBounds : bool;
+        drawSoftBodyConstraintColor : ESoftBodyConstraintColor;
     }
 }
 
@@ -1382,6 +1424,53 @@ BodyLockMultiWrite :: struct {
     GetBody :: (lock : *BodyLockMultiWrite, bodyLockInterface : *BodyLockInterface, bodyIndex : s32) -> *Body #foreign JoltC "JPH_BodyLockMultiWrite_GetBody";
 }
 
+DebugRenderer :: struct {
+    ECastShadow :: enum u32 {
+        On :: 0;
+        Off :: 1;
+    }
+
+    EDrawMode :: enum u32 {
+        Solid :: 0;
+        Wireframe :: 1;
+    }
+
+    ECullMode :: enum u32 {
+        CullBackFace :: 0;
+        CullFrontFace :: 1;
+        Off :: 2;
+    }
+
+    opaque : s8;
+
+    Destroy :: (self : *DebugRenderer) -> void #foreign JoltC "JPH_DebugRenderer_Destroy";
+    NextFrame :: (self : *DebugRenderer) -> void #foreign JoltC "JPH_DebugRenderer_NextFrame";
+}
+
+DebugRendererSimple :: struct {
+    Funcs :: struct {
+        Destruct : #type (*void) -> void #c_call;
+        DrawLine : #type (*void, RVec3, RVec3, Color) -> void #c_call;
+        DrawTriangle : #type (*void, RVec3, RVec3, RVec3, Color, DebugRenderer.ECastShadow) -> void #c_call;
+        DrawText3D : #type (*void, RVec3, *s8, u64, Color, float) -> void #c_call;
+    }
+
+    #as using,except(base) base : DebugRenderer;
+
+    Create :: (data : *void, funcs : DebugRendererSimple.Funcs, allocator : JoltCAllocator) -> *DebugRenderer #foreign JoltC "JPH_DebugRendererSimple_Create";
+}
+
+BodyDrawFilter :: struct {
+    Funcs :: struct {
+        Destruct : #type (*void) -> void #c_call;
+        ShouldDraw : #type (*void, *Body) -> bool #c_call;
+    }
+
+    Create :: (data : *void, funcs : BodyDrawFilter.Funcs, allocator : JoltCAllocator) -> *BodyDrawFilter #foreign JoltC "JPH_BodyDrawFilter_Create";
+
+    Destroy :: (self : *BodyDrawFilter) -> void #foreign JoltC "JPH_BodyDrawFilter_Destroy";
+}
+
 PhysicsSystem :: struct {
     Create :: (settings : PhysicsSystemSettings) -> *PhysicsSystem #foreign JoltC "JPH_PhysicsSystem_Create";
 
@@ -1415,6 +1504,10 @@ PhysicsSystem :: struct {
     GetDefaultLayerFilter :: (system : *PhysicsSystem, layer : ObjectLayer) -> DefaultObjectLayerFilter #foreign JoltC "JPH_PhysicsSystem_GetDefaultLayerFilter";
     OptimizeBroadPhase :: (system : *PhysicsSystem) -> void #foreign JoltC "JPH_PhysicsSystem_OptimizeBroadPhase";
     Update :: (system : *PhysicsSystem, deltaTime : float, collisionSteps : s32, tempAllocator : *TempAllocator, jobSystem : *JobSystem) -> EPhysicsUpdateError #foreign JoltC "JPH_PhysicsSystem_Update";
+    DrawBodies :: (system : *PhysicsSystem, settings : *BodyManager.DrawSettings, renderer : *DebugRenderer, bodyFilter : *BodyDrawFilter) -> void #foreign JoltC "JPH_PhysicsSystem_DrawBodies";
+    DrawConstraints :: (system : *PhysicsSystem, renderer : *DebugRenderer) -> void #foreign JoltC "JPH_PhysicsSystem_DrawConstraints";
+    DrawConstraintLimits :: (system : *PhysicsSystem, renderer : *DebugRenderer) -> void #foreign JoltC "JPH_PhysicsSystem_DrawConstraintLimits";
+    DrawConstraintReferenceFrame :: (system : *PhysicsSystem, renderer : *DebugRenderer) -> void #foreign JoltC "JPH_PhysicsSystem_DrawConstraintReferenceFrame";
 }
 
 PhysicsSystemSettings :: struct {
