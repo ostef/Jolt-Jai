@@ -40,8 +40,8 @@ main :: () {
     bpl_interface.MapObjectToBroadPhaseLayer(bpl_interface, xx ObjectLayer.NonMoving, xx BroadPhaseLayer.NonMoving);
     bpl_interface.MapObjectToBroadPhaseLayer(bpl_interface, xx ObjectLayer.Moving, xx BroadPhaseLayer.Moving);
 #if Jolt.EXTERNAL_PROFILE || Jolt.PROFILE_ENABLED {
-    bpl_interface.SetBroadPhaseLayerName(bpl_interface, xx BroadPhaseLayer.NonMoving, "NonMoving");
-    bpl_interface.SetBroadPhaseLayerName(bpl_interface, xx BroadPhaseLayer.Moving, "Moving");
+    bpl_interface.SetBroadPhaseLayerName(bpl_interface, xx BroadPhaseLayer.NonMoving, xx "NonMoving".data);
+    bpl_interface.SetBroadPhaseLayerName(bpl_interface, xx BroadPhaseLayer.Moving, xx "Moving".data);
 }
 
     object_layer_pair_filter := Jolt.ObjectLayerPairFilterTable.Create(2);

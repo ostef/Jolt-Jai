@@ -2,23 +2,26 @@ COMBINED_SHARED_LIBS :: true;
 
 // Defines
 
+PROFILE_ENABLED :: 1;
+DEBUG_RENDERER :: 1;
+ENABLE_ASSERTS :: 1;
+OBJECT_STREAM :: 1;
 VERSION_MAJOR :: 5;
 VERSION_MINOR :: 6;
 VERSION_PATCH :: 0;
 VERSION_FEATURE_BIT_1 :: 0;
 VERSION_FEATURE_BIT_2 :: 0;
 VERSION_FEATURE_BIT_3 :: 0;
-VERSION_FEATURE_BIT_4 :: 0;
+VERSION_FEATURE_BIT_4 :: 1;
 VERSION_FEATURE_BIT_5 :: 0;
-VERSION_FEATURE_BIT_6 :: 0;
+VERSION_FEATURE_BIT_6 :: 1;
 VERSION_FEATURE_BIT_7 :: 0;
 VERSION_FEATURE_BIT_8 :: 0;
 VERSION_FEATURE_BIT_9 :: 0;
-VERSION_FEATURE_BIT_10 :: 0;
-VERSION_FEATURE_BIT_11 :: 0;
+VERSION_FEATURE_BIT_10 :: 1;
+VERSION_FEATURE_BIT_11 :: 1;
 VERSION_ID :: ((VERSION_FEATURES<<24)|(VERSION_MAJOR<<16)|(VERSION_MINOR<<8)|VERSION_PATCH);
 DEBUG :: 1;
-ENABLE_ASSERTS :: 1;
 VECTOR_ALIGNMENT :: 16;
 DVECTOR_ALIGNMENT :: 32;
 cDefaultCollisionTolerance :: 1.0e-4;
@@ -902,6 +905,7 @@ BroadPhaseLayerInterface :: struct {
         Destruct : #type (*void) -> void #c_call;
         GetNumBroadPhaseLayers : #type (*void) -> u32 #c_call;
         GetBroadPhaseLayer : #type (*void, ObjectLayer) -> BroadPhaseLayer #c_call;
+        GetBroadPhaseLayerName : #type (*void, BroadPhaseLayer) -> *s8 #c_call;
     }
 
     opaque : s8;
@@ -911,6 +915,7 @@ BroadPhaseLayerInterface :: struct {
     Destroy :: (self : *BroadPhaseLayerInterface) -> void #foreign JoltC "JPH_BroadPhaseLayerInterface_Destroy";
     GetNumBroadPhaseLayers :: (bplInterface : *BroadPhaseLayerInterface) -> u32 #foreign JoltC "JPH_BroadPhaseLayerInterface_GetNumBroadPhaseLayers";
     GetBroadPhaseLayer :: (bplInterface : *BroadPhaseLayerInterface, objectLayer : ObjectLayer) -> BroadPhaseLayer #foreign JoltC "JPH_BroadPhaseLayerInterface_GetBroadPhaseLayer";
+    GetBroadPhaseLayerName :: (bplInterface : *BroadPhaseLayerInterface, broadPhaseLayer : BroadPhaseLayer) -> *s8 #foreign JoltC "JPH_BroadPhaseLayerInterface_GetBroadPhaseLayerName";
 }
 
 BroadPhaseLayerInterfaceTable :: struct {
@@ -919,6 +924,7 @@ BroadPhaseLayerInterfaceTable :: struct {
     Create :: (numObjectLayers : u32, numBroadPhaseLayers : u32) -> *BroadPhaseLayerInterfaceTable #foreign JoltC "JPH_BroadPhaseLayerInterfaceTable_Create";
 
     MapObjectToBroadPhaseLayer :: (table : *BroadPhaseLayerInterfaceTable, objectLayer : ObjectLayer, broadPhaseLayer : BroadPhaseLayer) -> void #foreign JoltC "JPH_BroadPhaseLayerInterfaceTable_MapObjectToBroadPhaseLayer";
+    SetBroadPhaseLayerName :: (table : *BroadPhaseLayerInterfaceTable, broadPhaseLayer : BroadPhaseLayer, name : *s8) -> void #foreign JoltC "JPH_BroadPhaseLayerInterfaceTable_SetBroadPhaseLayerName";
 }
 
 BroadPhaseLayerInterfaceMask :: struct {
@@ -927,6 +933,7 @@ BroadPhaseLayerInterfaceMask :: struct {
     Create :: (numBroadPhaseLayers : u32) -> *BroadPhaseLayerInterfaceMask #foreign JoltC "JPH_BroadPhaseLayerInterfaceMask_Create";
 
     ConfigureLayer :: (mask : *BroadPhaseLayerInterfaceMask, broadPhaseLayer : BroadPhaseLayer, groupsToInclude : u32, groupsToExclude : u32) -> void #foreign JoltC "JPH_BroadPhaseLayerInterfaceMask_ConfigureLayer";
+    SetBroadPhaseLayerName :: (mask : *BroadPhaseLayerInterfaceMask, broadPhaseLayer : BroadPhaseLayer, name : *s8) -> void #foreign JoltC "JPH_BroadPhaseLayerInterfaceMask_SetBroadPhaseLayerName";
 }
 
 ObjectLayerPairFilter :: struct {
