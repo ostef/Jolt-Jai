@@ -24,6 +24,7 @@ VERSION_ID :: ((VERSION_FEATURES<<24)|(VERSION_MAJOR<<16)|(VERSION_MINOR<<8)|VER
 DEBUG :: 1;
 VECTOR_ALIGNMENT :: 16;
 DVECTOR_ALIGNMENT :: 32;
+cLargeFloat :: 1.0e15;
 cDefaultCollisionTolerance :: 1.0e-4;
 cDefaultPenetrationTolerance :: 1.0e-4;
 cDefaultConvexRadius :: 0.05;
@@ -308,292 +309,6 @@ JoltCAllocator :: struct {
 
 PhysicsMaterial :: struct {}
 
-ShapeSettings :: struct {
-    opaque : s8;
-
-    Destroy :: (settings : *ShapeSettings) -> void #foreign JoltC "JPH_ShapeSettings_Destroy";
-    CreateShape :: (settings : *ShapeSettings) -> *Shape #foreign JoltC "JPH_ShapeSettings_CreateShape";
-    ClearCachedResult :: (settings : *ShapeSettings) -> void #foreign JoltC "JPH_ShapeSettings_ClearCachedResult";
-    SetUserData :: (settings : *ShapeSettings, userData : u64) -> void #foreign JoltC "JPH_ShapeSettings_SetUserData";
-    GetUserData :: (settings : *ShapeSettings) -> u64 #foreign JoltC "JPH_ShapeSettings_GetUserData";
-}
-
-EmptyShapeSettings :: struct {
-    #as using,except(base) base : ShapeSettings;
-
-    Create :: () -> *EmptyShapeSettings #foreign JoltC "JPH_EmptyShapeSettings_Create";
-
-    SetCenterOfMass :: (settings : *EmptyShapeSettings, centerOfMass : Vec3) -> void #foreign JoltC "JPH_EmptyShapeSettings_SetCenterOfMass";
-    GetCenterOfMass :: (settings : *EmptyShapeSettings) -> Vec3 #foreign JoltC "JPH_EmptyShapeSettings_GetCenterOfMass";
-}
-
-PlaneShapeSettings :: struct {
-    #as using,except(base) base : ShapeSettings;
-
-    Create :: () -> *PlaneShapeSettings #foreign JoltC "JPH_PlaneShapeSettings_Create";
-
-    SetPlane :: (settings : *PlaneShapeSettings, plane : Plane) -> void #foreign JoltC "JPH_PlaneShapeSettings_SetPlane";
-    GetPlane :: (settings : *PlaneShapeSettings) -> Plane #foreign JoltC "JPH_PlaneShapeSettings_GetPlane";
-    SetPhysicsMaterial :: (settings : *PlaneShapeSettings, material : *PhysicsMaterial) -> void #foreign JoltC "JPH_PlaneShapeSettings_SetPhysicsMaterial";
-    GetPhysicsMaterial :: (settings : *PlaneShapeSettings) -> *PhysicsMaterial #foreign JoltC "JPH_PlaneShapeSettings_GetPhysicsMaterial";
-    SetHalfExtent :: (settings : *PlaneShapeSettings, halfExtent : float) -> void #foreign JoltC "JPH_PlaneShapeSettings_SetHalfExtent";
-    GetHalfExtent :: (settings : *PlaneShapeSettings) -> float #foreign JoltC "JPH_PlaneShapeSettings_GetHalfExtent";
-}
-
-MeshShapeSettings :: struct {
-    EBuildQuality :: enum u32 {
-        FavorRuntimePerformance :: 0;
-        FavorBuildSpeed :: 1;
-    }
-
-    #as using,except(base) base : ShapeSettings;
-
-    Create :: () -> *MeshShapeSettings #foreign JoltC "JPH_MeshShapeSettings_Create";
-
-    Sanitize :: (settings : *MeshShapeSettings) -> void #foreign JoltC "JPH_MeshShapeSettings_Sanitize";
-    AddVertex :: (settings : *MeshShapeSettings, vertex : Float3) -> void #foreign JoltC "JPH_MeshShapeSettings_AddVertex";
-    AddVertices :: (settings : *MeshShapeSettings, vertices : *Float3, count : u32) -> void #foreign JoltC "JPH_MeshShapeSettings_AddVertices";
-    GetNumVertices :: (settings : *MeshShapeSettings) -> u32 #foreign JoltC "JPH_MeshShapeSettings_GetNumVertices";
-    GetVertices :: (settings : *MeshShapeSettings) -> *Float3 #foreign JoltC "JPH_MeshShapeSettings_GetVertices";
-    AddIndexedTriangle :: (settings : *MeshShapeSettings, triangle : IndexedTriangle) -> void #foreign JoltC "JPH_MeshShapeSettings_AddIndexedTriangle";
-    AddIndexedTriangles :: (settings : *MeshShapeSettings, triangles : *IndexedTriangle, count : u32) -> void #foreign JoltC "JPH_MeshShapeSettings_AddIndexedTriangles";
-    GetNumIndexedTriangles :: (settings : *MeshShapeSettings) -> u32 #foreign JoltC "JPH_MeshShapeSettings_GetNumIndexedTriangles";
-    GetIndexedTriangles :: (settings : *MeshShapeSettings) -> *IndexedTriangle #foreign JoltC "JPH_MeshShapeSettings_GetIndexedTriangles";
-    AddMaterial :: (settings : *MeshShapeSettings, material : *PhysicsMaterial) -> void #foreign JoltC "JPH_MeshShapeSettings_AddMaterial";
-    AddMaterials :: (settings : *MeshShapeSettings, materials : **PhysicsMaterial, count : u32) -> void #foreign JoltC "JPH_MeshShapeSettings_AddMaterials";
-    GetNumMaterials :: (settings : *MeshShapeSettings) -> u32 #foreign JoltC "JPH_MeshShapeSettings_GetNumMaterials";
-    GetMaterial :: (settings : *MeshShapeSettings, index : u32) -> *PhysicsMaterial #foreign JoltC "JPH_MeshShapeSettings_GetMaterial";
-    SetMaxTrianglesPerLeaf :: (settings : *MeshShapeSettings, maxTrianglesPerLeaf : u32) -> void #foreign JoltC "JPH_MeshShapeSettings_SetMaxTrianglesPerLeaf";
-    GetMaxTrianglesPerLeaf :: (settings : *MeshShapeSettings) -> u32 #foreign JoltC "JPH_MeshShapeSettings_GetMaxTrianglesPerLeaf";
-    SetActiveEdgeCosThresholdAngle :: (settings : *MeshShapeSettings, activeEdgeCosThresholdAngle : float) -> void #foreign JoltC "JPH_MeshShapeSettings_SetActiveEdgeCosThresholdAngle";
-    GetActiveEdgeCosThresholdAngle :: (settings : *MeshShapeSettings) -> float #foreign JoltC "JPH_MeshShapeSettings_GetActiveEdgeCosThresholdAngle";
-    SetPerTriangleUserData :: (settings : *MeshShapeSettings, perTriangleUserData : bool) -> void #foreign JoltC "JPH_MeshShapeSettings_SetPerTriangleUserData";
-    GetPerTriangleUserData :: (settings : *MeshShapeSettings) -> bool #foreign JoltC "JPH_MeshShapeSettings_GetPerTriangleUserData";
-    SetBuildQuality :: (settings : *MeshShapeSettings, buildQuality : MeshShapeSettings.EBuildQuality) -> void #foreign JoltC "JPH_MeshShapeSettings_SetBuildQuality";
-    GetBuildQuality :: (settings : *MeshShapeSettings) -> MeshShapeSettings.EBuildQuality #foreign JoltC "JPH_MeshShapeSettings_GetBuildQuality";
-}
-
-HeightFieldShapeSettings :: struct {
-    #as using,except(base) base : ShapeSettings;
-
-    Create :: () -> *HeightFieldShapeSettings #foreign JoltC "JPH_HeightFieldShapeSettings_Create";
-
-    DetermineMinAndMaxSample :: (settings : *HeightFieldShapeSettings, outMinValue : *float, outMaxValue : *float, outQuantizationScale : *float) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_DetermineMinAndMaxSample";
-    CalculateBitsPerSampleForError :: (settings : *HeightFieldShapeSettings, maxError : float) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_CalculateBitsPerSampleForError";
-    AddHeightSample :: (settings : *HeightFieldShapeSettings, sample : float) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_AddHeightSample";
-    AddHeightSamples :: (settings : *HeightFieldShapeSettings, samples : *float, count : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_AddHeightSamples";
-    GetNumHeightSamples :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetNumHeightSamples";
-    GetHeightSamples :: (settings : *HeightFieldShapeSettings) -> *float #foreign JoltC "JPH_HeightFieldShapeSettings_GetHeightSamples";
-    AddMaterialIndex :: (settings : *HeightFieldShapeSettings, materialIndex : u8) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_AddMaterialIndex";
-    AddMaterialIndices :: (settings : *HeightFieldShapeSettings, materialIndices : *u8, count : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_AddMaterialIndices";
-    GetNumMaterialIndices :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetNumMaterialIndices";
-    GetMaterialIndices :: (settings : *HeightFieldShapeSettings) -> *u8 #foreign JoltC "JPH_HeightFieldShapeSettings_GetMaterialIndices";
-    AddMaterial :: (settings : *HeightFieldShapeSettings, material : *PhysicsMaterial) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_AddMaterial";
-    AddMaterials :: (settings : *HeightFieldShapeSettings, materials : **PhysicsMaterial, count : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_AddMaterials";
-    GetNumMaterials :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetNumMaterials";
-    GetMaterial :: (settings : *HeightFieldShapeSettings, index : u32) -> *PhysicsMaterial #foreign JoltC "JPH_HeightFieldShapeSettings_GetMaterial";
-    SetOffset :: (settings : *HeightFieldShapeSettings, offset : Vec3) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetOffset";
-    GetOffset :: (settings : *HeightFieldShapeSettings) -> Vec3 #foreign JoltC "JPH_HeightFieldShapeSettings_GetOffset";
-    SetScale :: (settings : *HeightFieldShapeSettings, scale : Vec3) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetScale";
-    GetScale :: (settings : *HeightFieldShapeSettings) -> Vec3 #foreign JoltC "JPH_HeightFieldShapeSettings_GetScale";
-    SetSampleCount :: (settings : *HeightFieldShapeSettings, sampleCount : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetSampleCount";
-    GetSampleCount :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetSampleCount";
-    SetMinHeightValue :: (settings : *HeightFieldShapeSettings, minHeightValue : float) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetMinHeightValue";
-    GetMinHeightValue :: (settings : *HeightFieldShapeSettings) -> float #foreign JoltC "JPH_HeightFieldShapeSettings_GetMinHeightValue";
-    SetMaxHeightValue :: (settings : *HeightFieldShapeSettings, maxHeightValue : float) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetMaxHeightValue";
-    GetMaxHeightValue :: (settings : *HeightFieldShapeSettings) -> float #foreign JoltC "JPH_HeightFieldShapeSettings_GetMaxHeightValue";
-    SetMaterialsCapacity :: (settings : *HeightFieldShapeSettings, materialsCapacity : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetMaterialsCapacity";
-    GetMaterialsCapacity :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetMaterialsCapacity";
-    SetBlockSize :: (settings : *HeightFieldShapeSettings, blockSize : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetBlockSize";
-    GetBlockSize :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetBlockSize";
-    SetBitsPerSample :: (settings : *HeightFieldShapeSettings, bitsPerSample : u32) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetBitsPerSample";
-    GetBitsPerSample :: (settings : *HeightFieldShapeSettings) -> u32 #foreign JoltC "JPH_HeightFieldShapeSettings_GetBitsPerSample";
-    SetActiveEdgeCosThresholdAngle :: (settings : *HeightFieldShapeSettings, activeEdgeCosThresholdAngle : float) -> void #foreign JoltC "JPH_HeightFieldShapeSettings_SetActiveEdgeCosThresholdAngle";
-    GetActiveEdgeCosThresholdAngle :: (settings : *HeightFieldShapeSettings) -> float #foreign JoltC "JPH_HeightFieldShapeSettings_GetActiveEdgeCosThresholdAngle";
-}
-
-ConvexShapeSettings :: struct {
-    #as using,except(base) base : ShapeSettings;
-
-    SetPhysicsMaterial :: (settings : *ConvexShapeSettings, material : *PhysicsMaterial) -> void #foreign JoltC "JPH_ConvexShapeSettings_SetPhysicsMaterial";
-    GetPhysicsMaterial :: (settings : *ConvexShapeSettings) -> *PhysicsMaterial #foreign JoltC "JPH_ConvexShapeSettings_GetPhysicsMaterial";
-    SetDensity :: (settings : *ConvexShapeSettings, density : float) -> void #foreign JoltC "JPH_ConvexShapeSettings_SetDensity";
-    GetDensity :: (settings : *ConvexShapeSettings) -> float #foreign JoltC "JPH_ConvexShapeSettings_GetDensity";
-}
-
-SphereShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *SphereShapeSettings #foreign JoltC "JPH_SphereShapeSettings_Create";
-
-    SetRadius :: (settings : *SphereShapeSettings, radius : float) -> void #foreign JoltC "JPH_SphereShapeSettings_SetRadius";
-    GetRadius :: (settings : *SphereShapeSettings) -> float #foreign JoltC "JPH_SphereShapeSettings_GetRadius";
-}
-
-BoxShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *BoxShapeSettings #foreign JoltC "JPH_BoxShapeSettings_Create";
-
-    SetHalfExtent :: (settings : *BoxShapeSettings, halfExtent : Vec3) -> void #foreign JoltC "JPH_BoxShapeSettings_SetHalfExtent";
-    GetHalfExtent :: (settings : *BoxShapeSettings) -> Vec3 #foreign JoltC "JPH_BoxShapeSettings_GetHalfExtent";
-    SetConvexRadius :: (settings : *BoxShapeSettings, convexRadius : float) -> void #foreign JoltC "JPH_BoxShapeSettings_SetConvexRadius";
-    GetConvexRadius :: (settings : *BoxShapeSettings) -> float #foreign JoltC "JPH_BoxShapeSettings_GetConvexRadius";
-}
-
-TriangleShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *TriangleShapeSettings #foreign JoltC "JPH_TriangleShapeSettings_Create";
-
-    SetV1 :: (settings : *TriangleShapeSettings, v1 : Vec3) -> void #foreign JoltC "JPH_TriangleShapeSettings_SetV1";
-    GetV1 :: (settings : *TriangleShapeSettings) -> Vec3 #foreign JoltC "JPH_TriangleShapeSettings_GetV1";
-    SetV2 :: (settings : *TriangleShapeSettings, v2 : Vec3) -> void #foreign JoltC "JPH_TriangleShapeSettings_SetV2";
-    GetV2 :: (settings : *TriangleShapeSettings) -> Vec3 #foreign JoltC "JPH_TriangleShapeSettings_GetV2";
-    SetV3 :: (settings : *TriangleShapeSettings, v3 : Vec3) -> void #foreign JoltC "JPH_TriangleShapeSettings_SetV3";
-    GetV3 :: (settings : *TriangleShapeSettings) -> Vec3 #foreign JoltC "JPH_TriangleShapeSettings_GetV3";
-    SetPoints :: (settings : *TriangleShapeSettings, v1 : Vec3, v2 : Vec3, v3 : Vec3) -> void #foreign JoltC "JPH_TriangleShapeSettings_SetPoints";
-    GetPoints :: (settings : *TriangleShapeSettings, outV1 : *Vec3, outV2 : *Vec3, outV3 : *Vec3) -> void #foreign JoltC "JPH_TriangleShapeSettings_GetPoints";
-    SetConvexRadius :: (settings : *TriangleShapeSettings, convexRadius : float) -> void #foreign JoltC "JPH_TriangleShapeSettings_SetConvexRadius";
-    GetConvexRadius :: (settings : *TriangleShapeSettings) -> float #foreign JoltC "JPH_TriangleShapeSettings_GetConvexRadius";
-}
-
-CapsuleShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *CapsuleShapeSettings #foreign JoltC "JPH_CapsuleShapeSettings_Create";
-
-    SetRadius :: (settings : *CapsuleShapeSettings, radius : float) -> void #foreign JoltC "JPH_CapsuleShapeSettings_SetRadius";
-    GetRadius :: (settings : *CapsuleShapeSettings) -> float #foreign JoltC "JPH_CapsuleShapeSettings_GetRadius";
-    SetHalfHeightOfCylinder :: (settings : *CapsuleShapeSettings, halfHeightOfCylinder : float) -> void #foreign JoltC "JPH_CapsuleShapeSettings_SetHalfHeightOfCylinder";
-    GetHalfHeightOfCylinder :: (settings : *CapsuleShapeSettings) -> float #foreign JoltC "JPH_CapsuleShapeSettings_GetHalfHeightOfCylinder";
-    IsValid :: (settings : *CapsuleShapeSettings) -> bool #foreign JoltC "JPH_CapsuleShapeSettings_IsValid";
-    IsSphere :: (settings : *CapsuleShapeSettings) -> bool #foreign JoltC "JPH_CapsuleShapeSettings_IsSphere";
-}
-
-TaperedCapsuleShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *TaperedCapsuleShapeSettings #foreign JoltC "JPH_TaperedCapsuleShapeSettings_Create";
-
-    SetHalfHeightOfTaperedCylinder :: (settings : *TaperedCapsuleShapeSettings, halfHeightOfTaperedCylinder : float) -> void #foreign JoltC "JPH_TaperedCapsuleShapeSettings_SetHalfHeightOfTaperedCylinder";
-    GetHalfHeightOfTaperedCylinder :: (settings : *TaperedCapsuleShapeSettings) -> float #foreign JoltC "JPH_TaperedCapsuleShapeSettings_GetHalfHeightOfTaperedCylinder";
-    SetTopRadius :: (settings : *TaperedCapsuleShapeSettings, topRadius : float) -> void #foreign JoltC "JPH_TaperedCapsuleShapeSettings_SetTopRadius";
-    GetTopRadius :: (settings : *TaperedCapsuleShapeSettings) -> float #foreign JoltC "JPH_TaperedCapsuleShapeSettings_GetTopRadius";
-    SetBottomRadius :: (settings : *TaperedCapsuleShapeSettings, bottomRadius : float) -> void #foreign JoltC "JPH_TaperedCapsuleShapeSettings_SetBottomRadius";
-    GetBottomRadius :: (settings : *TaperedCapsuleShapeSettings) -> float #foreign JoltC "JPH_TaperedCapsuleShapeSettings_GetBottomRadius";
-    IsValid :: (settings : *TaperedCapsuleShapeSettings) -> bool #foreign JoltC "JPH_TaperedCapsuleShapeSettings_IsValid";
-    IsSphere :: (settings : *TaperedCapsuleShapeSettings) -> bool #foreign JoltC "JPH_TaperedCapsuleShapeSettings_IsSphere";
-}
-
-CylinderShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *CylinderShapeSettings #foreign JoltC "JPH_CylinderShapeSettings_Create";
-
-    SetHalfHeight :: (settings : *CylinderShapeSettings, halfHeight : float) -> void #foreign JoltC "JPH_CylinderShapeSettings_SetHalfHeight";
-    GetHalfHeight :: (settings : *CylinderShapeSettings) -> float #foreign JoltC "JPH_CylinderShapeSettings_GetHalfHeight";
-    SetRadius :: (settings : *CylinderShapeSettings, radius : float) -> void #foreign JoltC "JPH_CylinderShapeSettings_SetRadius";
-    GetRadius :: (settings : *CylinderShapeSettings) -> float #foreign JoltC "JPH_CylinderShapeSettings_GetRadius";
-    SetConvexRadius :: (settings : *CylinderShapeSettings, convexRadius : float) -> void #foreign JoltC "JPH_CylinderShapeSettings_SetConvexRadius";
-    GetConvexRadius :: (settings : *CylinderShapeSettings) -> float #foreign JoltC "JPH_CylinderShapeSettings_GetConvexRadius";
-}
-
-TaperedCylinderShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *TaperedCylinderShapeSettings #foreign JoltC "JPH_TaperedCylinderShapeSettings_Create";
-
-    SetHalfHeight :: (settings : *TaperedCylinderShapeSettings, halfHeight : float) -> void #foreign JoltC "JPH_TaperedCylinderShapeSettings_SetHalfHeight";
-    GetHalfHeight :: (settings : *TaperedCylinderShapeSettings) -> float #foreign JoltC "JPH_TaperedCylinderShapeSettings_GetHalfHeight";
-    SetTopRadius :: (settings : *TaperedCylinderShapeSettings, topRadius : float) -> void #foreign JoltC "JPH_TaperedCylinderShapeSettings_SetTopRadius";
-    GetTopRadius :: (settings : *TaperedCylinderShapeSettings) -> float #foreign JoltC "JPH_TaperedCylinderShapeSettings_GetTopRadius";
-    SetBottomRadius :: (settings : *TaperedCylinderShapeSettings, bottomRadius : float) -> void #foreign JoltC "JPH_TaperedCylinderShapeSettings_SetBottomRadius";
-    GetBottomRadius :: (settings : *TaperedCylinderShapeSettings) -> float #foreign JoltC "JPH_TaperedCylinderShapeSettings_GetBottomRadius";
-    SetConvexRadius :: (settings : *TaperedCylinderShapeSettings, convexRadius : float) -> void #foreign JoltC "JPH_TaperedCylinderShapeSettings_SetConvexRadius";
-    GetConvexRadius :: (settings : *TaperedCylinderShapeSettings) -> float #foreign JoltC "JPH_TaperedCylinderShapeSettings_GetConvexRadius";
-}
-
-ConvexHullShapeSettings :: struct {
-    #as using,except(base) base : ConvexShapeSettings;
-
-    Create :: () -> *ConvexHullShapeSettings #foreign JoltC "JPH_ConvexHullShapeSettings_Create";
-
-    AddPoints :: (settings : *ConvexHullShapeSettings, points : *Vec3, count : u32) -> void #foreign JoltC "JPH_ConvexHullShapeSettings_AddPoints";
-    GetNumPoints :: (settings : *ConvexHullShapeSettings) -> u32 #foreign JoltC "JPH_ConvexHullShapeSettings_GetNumPoints";
-    GetPoints :: (settings : *ConvexHullShapeSettings) -> *Vec3 #foreign JoltC "JPH_ConvexHullShapeSettings_GetPoints";
-    SetMaxConvexRadius :: (settings : *ConvexHullShapeSettings, maxConvexRadius : float) -> void #foreign JoltC "JPH_ConvexHullShapeSettings_SetMaxConvexRadius";
-    GetMaxConvexRadius :: (settings : *ConvexHullShapeSettings) -> float #foreign JoltC "JPH_ConvexHullShapeSettings_GetMaxConvexRadius";
-    SetMaxErrorConvexRadius :: (settings : *ConvexHullShapeSettings, maxErrorConvexRadius : float) -> void #foreign JoltC "JPH_ConvexHullShapeSettings_SetMaxErrorConvexRadius";
-    GetMaxErrorConvexRadius :: (settings : *ConvexHullShapeSettings) -> float #foreign JoltC "JPH_ConvexHullShapeSettings_GetMaxErrorConvexRadius";
-    SetHullTolerance :: (settings : *ConvexHullShapeSettings, hullTolerance : float) -> void #foreign JoltC "JPH_ConvexHullShapeSettings_SetHullTolerance";
-    GetHullTolerance :: (settings : *ConvexHullShapeSettings) -> float #foreign JoltC "JPH_ConvexHullShapeSettings_GetHullTolerance";
-}
-
-CompoundShapeSettings :: struct {
-    #as using,except(base) base : ShapeSettings;
-
-    AddShape :: (settings : *CompoundShapeSettings, position : Vec3, rotation : Quat, subShape : *Shape, userData : u32) -> void #foreign JoltC "JPH_CompoundShapeSettings_AddShape";
-    AddShapeSettings :: (settings : *CompoundShapeSettings, position : Vec3, rotation : Quat, subShapeSettings : *ShapeSettings, userData : u32) -> void #foreign JoltC "JPH_CompoundShapeSettings_AddShapeSettings";
-}
-
-StaticCompoundShapeSettings :: struct {
-    #as using,except(base) base : CompoundShapeSettings;
-
-    Create :: () -> *StaticCompoundShapeSettings #foreign JoltC "JPH_StaticCompoundShapeSettings_Create";
-}
-
-MutableCompoundShapeSettings :: struct {
-    #as using,except(base) base : CompoundShapeSettings;
-
-    Create :: () -> *MutableCompoundShapeSettings #foreign JoltC "JPH_MutableCompoundShapeSettings_Create";
-}
-
-DecoratedShapeSettings :: struct {
-    #as using,except(base) base : ShapeSettings;
-}
-
-RotatedTranslatedShapeSettings :: struct {
-    #as using,except(base) base : DecoratedShapeSettings;
-
-    Create :: () -> *RotatedTranslatedShapeSettings #foreign JoltC "JPH_RotatedTranslatedShapeSettings_Create";
-
-    SetInnerShape :: (settings : *RotatedTranslatedShapeSettings, innerShape : *Shape) -> void #foreign JoltC "JPH_RotatedTranslatedShapeSettings_SetInnerShape";
-    GetInnerShape :: (settings : *RotatedTranslatedShapeSettings) -> *Shape #foreign JoltC "JPH_RotatedTranslatedShapeSettings_GetInnerShape";
-    SetInnerShapeSettings :: (settings : *RotatedTranslatedShapeSettings, innerShapeSettings : *ShapeSettings) -> void #foreign JoltC "JPH_RotatedTranslatedShapeSettings_SetInnerShapeSettings";
-    GetInnerShapeSettings :: (settings : *RotatedTranslatedShapeSettings) -> *ShapeSettings #foreign JoltC "JPH_RotatedTranslatedShapeSettings_GetInnerShapeSettings";
-    SetPosition :: (settings : *RotatedTranslatedShapeSettings, position : Vec3) -> void #foreign JoltC "JPH_RotatedTranslatedShapeSettings_SetPosition";
-    GetPosition :: (settings : *RotatedTranslatedShapeSettings) -> Vec3 #foreign JoltC "JPH_RotatedTranslatedShapeSettings_GetPosition";
-    SetRotation :: (settings : *RotatedTranslatedShapeSettings, rotation : Quat) -> void #foreign JoltC "JPH_RotatedTranslatedShapeSettings_SetRotation";
-    GetRotation :: (settings : *RotatedTranslatedShapeSettings) -> Quat #foreign JoltC "JPH_RotatedTranslatedShapeSettings_GetRotation";
-}
-
-ScaledShapeSettings :: struct {
-    #as using,except(base) base : DecoratedShapeSettings;
-
-    Create :: () -> *ScaledShapeSettings #foreign JoltC "JPH_ScaledShapeSettings_Create";
-
-    SetInnerShape :: (settings : *ScaledShapeSettings, innerShape : *Shape) -> void #foreign JoltC "JPH_ScaledShapeSettings_SetInnerShape";
-    GetInnerShape :: (settings : *ScaledShapeSettings) -> *Shape #foreign JoltC "JPH_ScaledShapeSettings_GetInnerShape";
-    SetInnerShapeSettings :: (settings : *ScaledShapeSettings, innerShapeSettings : *ShapeSettings) -> void #foreign JoltC "JPH_ScaledShapeSettings_SetInnerShapeSettings";
-    GetInnerShapeSettings :: (settings : *ScaledShapeSettings) -> *ShapeSettings #foreign JoltC "JPH_ScaledShapeSettings_GetInnerShapeSettings";
-    SetScale :: (settings : *ScaledShapeSettings, scale : Vec3) -> void #foreign JoltC "JPH_ScaledShapeSettings_SetScale";
-    GetScale :: (settings : *ScaledShapeSettings) -> Vec3 #foreign JoltC "JPH_ScaledShapeSettings_GetScale";
-}
-
-OffsetCenterOfMassShapeSettings :: struct {
-    #as using,except(base) base : DecoratedShapeSettings;
-
-    Create :: () -> *OffsetCenterOfMassShapeSettings #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_Create";
-
-    SetInnerShape :: (settings : *OffsetCenterOfMassShapeSettings, innerShape : *Shape) -> void #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_SetInnerShape";
-    GetInnerShape :: (settings : *OffsetCenterOfMassShapeSettings) -> *Shape #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_GetInnerShape";
-    SetInnerShapeSettings :: (settings : *OffsetCenterOfMassShapeSettings, innerShapeSettings : *ShapeSettings) -> void #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_SetInnerShapeSettings";
-    GetInnerShapeSettings :: (settings : *OffsetCenterOfMassShapeSettings) -> *ShapeSettings #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_GetInnerShapeSettings";
-    SetOffset :: (settings : *OffsetCenterOfMassShapeSettings, offset : Vec3) -> void #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_SetOffset";
-    GetOffset :: (settings : *OffsetCenterOfMassShapeSettings) -> Vec3 #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_GetOffset";
-}
-
 Shape :: struct {
     SupportingFace :: struct {
         size : u32;
@@ -613,6 +328,7 @@ Shape :: struct {
 
     AddRef :: (shape : *Shape) -> void #foreign JoltC "JPH_Shape_AddRef";
     Release :: (shape : *Shape) -> void #foreign JoltC "JPH_Shape_Release";
+    GetRefCount :: (shape : *Shape) -> u32 #foreign JoltC "JPH_Shape_GetRefCount";
     GetType :: (shape : *Shape) -> EShapeType #foreign JoltC "JPH_Shape_GetType";
     GetSubType :: (shape : *Shape) -> EShapeSubType #foreign JoltC "JPH_Shape_GetSubType";
     GetUserData :: (shape : *Shape) -> u64 #foreign JoltC "JPH_Shape_GetUserData";
@@ -637,6 +353,221 @@ Shape :: struct {
     IsValidScale :: (shape : *Shape, scale : Vec3) -> bool #foreign JoltC "JPH_Shape_IsValidScale";
     MakeScaleValid :: (shape : *Shape, scale : Vec3) -> Vec3 #foreign JoltC "JPH_Shape_MakeScaleValid";
     ScaleShape :: (shape : *Shape, scale : Vec3) -> *Shape #foreign JoltC "JPH_Shape_ScaleShape";
+}
+
+ShapeSettings :: struct {
+    userData : u64;
+}
+
+EmptyShapeSettings :: struct {
+    #as using,except(base) base : ShapeSettings;
+    centerOfMass : Vec3;
+
+    CreateShape :: (settings : *EmptyShapeSettings) -> *Shape #foreign JoltC "JPH_EmptyShapeSettings_CreateShape";
+}
+
+PlaneShapeSettings :: struct {
+    #as using,except(base) base : ShapeSettings;
+    plane : Plane;
+    material : *PhysicsMaterial;
+    halfExtent : float;
+
+    CreateShape :: (settings : *PlaneShapeSettings) -> *Shape #foreign JoltC "JPH_PlaneShapeSettings_CreateShape";
+}
+
+IndexedTriangle :: struct {
+    idx : [3]u32;
+    materialIndex : u32;
+    userData : u32;
+}
+
+MeshShapeSettings :: struct {
+    cDefaultMaxTrianglesPerLeaf :: 8;
+    cDefaultActiveEdgeCosThresholdAngle :: 0.996195;
+
+
+    EBuildQuality :: enum u32 {
+        FavorRuntimePerformance :: 0;
+        FavorBuildSpeed :: 1;
+    }
+
+    #as using,except(base) base : ShapeSettings;
+    numVertices : u32;
+    vertices : *Float3;
+    numIndexedTriangles : u32;
+    indexedTriangles : *IndexedTriangle;
+    numMaterials : u32;
+    materials : **PhysicsMaterial;
+    maxTrianglesPerLeaf : u32;
+    activeEdgeCosThresholdAngle : float;
+    perTriangleUserData : bool;
+    buildQuality : MeshShapeSettings.EBuildQuality;
+
+    CreateShape :: (settings : *MeshShapeSettings) -> *Shape #foreign JoltC "JPH_MeshShapeSettings_CreateShape";
+}
+
+HeightFieldShapeSettings :: struct {
+    cDefaultMinHeightValue :: cLargeFloat;
+    cDefaultMaxHeightValue :: (-cLargeFloat);
+    cDefaultBlockSize :: 2;
+    cDefaultBitsPerSample :: 8;
+    cDefaultActiveEdgeCosThresholdAngle :: 0.996195;
+
+    #as using,except(base) base : ShapeSettings;
+    offset : Vec3;
+    scale : Vec3;
+    minHeightValue : float;
+    maxHeightValue : float;
+    materialsCapacity : u32;
+    blockSize : u32;
+    bitsPerSample : u32;
+    sampleCount : u32;
+    heightSamples : *float;
+    materialIndices : *u8;
+    numMaterials : u32;
+    materials : **PhysicsMaterial;
+    activeEdgeCosThresholdAngle : float;
+
+    CreateShape :: (settings : *HeightFieldShapeSettings) -> *Shape #foreign JoltC "JPH_HeightFieldShapeSettings_CreateShape";
+}
+
+ConvexShapeSettings :: struct {
+    cDefaultDensity :: 1000.0;
+
+    #as using,except(base) base : ShapeSettings;
+    material : *PhysicsMaterial;
+    density : float;
+}
+
+SphereShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    radius : float;
+
+    CreateShape :: (settings : *SphereShapeSettings) -> *Shape #foreign JoltC "JPH_SphereShapeSettings_CreateShape";
+}
+
+BoxShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    halfExtent : Vec3;
+    convexRadius : float;
+
+    CreateShape :: (settings : *BoxShapeSettings) -> *Shape #foreign JoltC "JPH_BoxShapeSettings_CreateShape";
+}
+
+TriangleShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    v1 : Vec3;
+    v2 : Vec3;
+    v3 : Vec3;
+    convexRadius : float;
+
+    CreateShape :: (settings : *TriangleShapeSettings) -> *Shape #foreign JoltC "JPH_TriangleShapeSettings_CreateShape";
+}
+
+CapsuleShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    radius : float;
+    halfHeightOfCylinder : float;
+
+    CreateShape :: (settings : *CapsuleShapeSettings) -> *Shape #foreign JoltC "JPH_CapsuleShapeSettings_CreateShape";
+    IsValid :: (settings : *CapsuleShapeSettings) -> bool #foreign JoltC "JPH_CapsuleShapeSettings_IsValid";
+    IsSphere :: (settings : *CapsuleShapeSettings) -> bool #foreign JoltC "JPH_CapsuleShapeSettings_IsSphere";
+}
+
+TaperedCapsuleShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    halfHeightOfTaperedCylinder : float;
+    topRadius : float;
+    bottomRadius : float;
+
+    CreateShape :: (settings : *TaperedCapsuleShapeSettings) -> *Shape #foreign JoltC "JPH_TaperedCapsuleShapeSettings_CreateShape";
+    IsValid :: (settings : *TaperedCapsuleShapeSettings) -> bool #foreign JoltC "JPH_TaperedCapsuleShapeSettings_IsValid";
+    IsSphere :: (settings : *TaperedCapsuleShapeSettings) -> bool #foreign JoltC "JPH_TaperedCapsuleShapeSettings_IsSphere";
+}
+
+CylinderShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    halfHeight : float;
+    radius : float;
+    convexRadius : float;
+
+    CreateShape :: (settings : *CylinderShapeSettings) -> *Shape #foreign JoltC "JPH_CylinderShapeSettings_CreateShape";
+}
+
+TaperedCylinderShapeSettings :: struct {
+    #as using,except(base) base : ConvexShapeSettings;
+    halfHeight : float;
+    topRadius : float;
+    bottomRadius : float;
+    convexRadius : float;
+
+    CreateShape :: (settings : *TaperedCylinderShapeSettings) -> *Shape #foreign JoltC "JPH_TaperedCylinderShapeSettings_CreateShape";
+}
+
+ConvexHullShapeSettings :: struct {
+    cDefaultMaxErrorConvexRadius :: 0.05;
+    cDefaultHullTolerance :: 1.0e-3;
+
+    #as using,except(base) base : ConvexShapeSettings;
+    numPoints : u32;
+    points : *Vec3;
+    maxConvexRadius : float;
+    maxErrorConvexRadius : float;
+    hullTolerance : float;
+
+    CreateShape :: (settings : *ConvexHullShapeSettings) -> *Shape #foreign JoltC "JPH_ConvexHullShapeSettings_CreateShape";
+}
+
+CompoundShapeSettings :: struct {
+    SubShapeSettings :: struct {
+        shape : *Shape;
+        position : Vec3;
+        rotation : Quat;
+        userData : u32;
+    }
+
+    #as using,except(base) base : ShapeSettings;
+    numSubShapes : u32;
+    subShapes : *CompoundShapeSettings.SubShapeSettings;
+}
+
+StaticCompoundShapeSettings :: struct {
+    #as using,except(base) base : CompoundShapeSettings;
+
+    CreateShape :: (settings : *StaticCompoundShapeSettings) -> *Shape #foreign JoltC "JPH_StaticCompoundShapeSettings_CreateShape";
+}
+
+MutableCompoundShapeSettings :: struct {
+    #as using,except(base) base : CompoundShapeSettings;
+
+    CreateShape :: (settings : *MutableCompoundShapeSettings) -> *Shape #foreign JoltC "JPH_MutableCompoundShapeSettings_CreateShape";
+}
+
+DecoratedShapeSettings :: struct {
+    #as using,except(base) base : ShapeSettings;
+    innerShape : *Shape;
+}
+
+RotatedTranslatedShapeSettings :: struct {
+    #as using,except(base) base : DecoratedShapeSettings;
+    position : Vec3;
+    rotation : Quat;
+
+    CreateShape :: (settings : *RotatedTranslatedShapeSettings) -> *Shape #foreign JoltC "JPH_RotatedTranslatedShapeSettings_CreateShape";
+}
+
+ScaledShapeSettings :: struct {
+    #as using,except(base) base : DecoratedShapeSettings;
+    scale : Vec3;
+
+    CreateShape :: (settings : *ScaledShapeSettings) -> *Shape #foreign JoltC "JPH_ScaledShapeSettings_CreateShape";
+}
+
+OffsetCenterOfMassShapeSettings :: struct {
+    #as using,except(base) base : DecoratedShapeSettings;
+    offset : Vec3;
+
+    CreateShape :: (settings : *OffsetCenterOfMassShapeSettings) -> *Shape #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_CreateShape";
 }
 
 EmptyShape :: struct {
@@ -801,12 +732,6 @@ OffsetCenterOfMassShape :: struct {
     #as using,except(base) base : DecoratedShape;
 
     GetOffset :: (shape : *OffsetCenterOfMassShape) -> Vec3 #foreign JoltC "JPH_OffsetCenterOfMassShape_GetOffset";
-}
-
-IndexedTriangle :: struct {
-    idx : [3]u32;
-    materialIndex : u32;
-    userData : u32;
 }
 
 MassProperties :: struct {
