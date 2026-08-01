@@ -189,6 +189,63 @@ EPhysicsUpdateError :: enum_flags u32 {
     ContactConstraintsFull :: 4;
 }
 
+EConstraintType :: enum u32 {
+    Constraint :: 0;
+    TwoBodyConstraint :: 1;
+}
+
+EConstraintSubType :: enum u32 {
+    Fixed :: 0;
+    Point :: 1;
+    Hinge :: 2;
+    Slider :: 3;
+    Distance :: 4;
+    Cone :: 5;
+    SwingTwist :: 6;
+    SixDOF :: 7;
+    Path :: 8;
+    Vehicle :: 9;
+    RackAndPinion :: 10;
+    Gear :: 11;
+    Pulley :: 12;
+    User1 :: 13;
+    User2 :: 14;
+    User3 :: 15;
+    User4 :: 16;
+}
+
+EConstraintSpace :: enum u32 {
+    LocalToBodyCOM :: 0;
+    WorldSpace :: 1;
+}
+
+ESpringMode :: enum u8 {
+    FrequencyAndDamping :: 0;
+    StiffnessAndDamping :: 1;
+    MassNormalizedStiffnessAndDamping :: 2;
+}
+
+EMotorState :: enum u32 {
+    Off :: 0;
+    Velocity :: 1;
+    Position :: 2;
+    PositionAndVelocity :: 3;
+}
+
+EPathRotationConstraintType :: enum u32 {
+    Free :: 0;
+    ConstrainAroundTangent :: 1;
+    ConstrainAroundNormal :: 2;
+    ConstrainAroundBinormal :: 3;
+    ConstrainToPath :: 4;
+    FullyConstrained :: 5;
+}
+
+ESwingType :: enum u8 {
+    Cone :: 0;
+    Pyramid :: 1;
+}
+
 // Structs
 
 TempAllocator :: struct {
@@ -1016,7 +1073,7 @@ BroadPhaseQuery :: struct {
     CastRayCollectCallback :: #type (*void, *BroadPhaseCastResult) -> float #c_call;
 
     GetBounds :: (query : *BroadPhaseQuery) -> AABox #foreign JoltC "JPH_BroadPhaseQuery_GetBounds";
-    CastRay :: (query : *BroadPhaseQuery, ray : RayCast, collectorType : ECollisionCollectorType, data : *void, callback : BroadPhaseQuery.CastRayHitCallback, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> bool #foreign JoltC "JPH_BroadPhaseQuery_CastRay";
+    CastRay :: (query : *BroadPhaseQuery, ray : RayCast, collectorType : ECollisionCollectorType, callbackData : *void, callback : BroadPhaseQuery.CastRayHitCallback, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> bool #foreign JoltC "JPH_BroadPhaseQuery_CastRay";
 }
 
 NarrowPhaseQuery :: struct {
@@ -1427,6 +1484,10 @@ PhysicsSystem :: struct {
     GetObjectLayerPairFilter :: (system : *PhysicsSystem) -> *ObjectLayerPairFilter #foreign JoltC "JPH_PhysicsSystem_GetObjectLayerPairFilter";
     GetDefaultBroadPhaseLayerFilter :: (system : *PhysicsSystem, layer : ObjectLayer) -> DefaultBroadPhaseLayerFilter #foreign JoltC "JPH_PhysicsSystem_GetDefaultBroadPhaseLayerFilter";
     GetDefaultLayerFilter :: (system : *PhysicsSystem, layer : ObjectLayer) -> DefaultObjectLayerFilter #foreign JoltC "JPH_PhysicsSystem_GetDefaultLayerFilter";
+    AddConstraint :: (system : *PhysicsSystem, constraint : *Constraint) -> void #foreign JoltC "JPH_PhysicsSystem_AddConstraint";
+    RemoveConstraint :: (system : *PhysicsSystem, constraint : *Constraint) -> void #foreign JoltC "JPH_PhysicsSystem_RemoveConstraint";
+    AddConstraints :: (system : *PhysicsSystem, constraints : **Constraint, numConstraints : s32) -> void #foreign JoltC "JPH_PhysicsSystem_AddConstraints";
+    RemoveConstraints :: (system : *PhysicsSystem, constraints : **Constraint, numConstraints : s32) -> void #foreign JoltC "JPH_PhysicsSystem_RemoveConstraints";
     OptimizeBroadPhase :: (system : *PhysicsSystem) -> void #foreign JoltC "JPH_PhysicsSystem_OptimizeBroadPhase";
     Update :: (system : *PhysicsSystem, deltaTime : float, collisionSteps : s32, tempAllocator : *TempAllocator, jobSystem : *JobSystem) -> EPhysicsUpdateError #foreign JoltC "JPH_PhysicsSystem_Update";
     DrawBodies :: (system : *PhysicsSystem, settings : *BodyManager.DrawSettings, renderer : *DebugRenderer, bodyFilter : *BodyDrawFilter) -> void #foreign JoltC "JPH_PhysicsSystem_DrawBodies";
@@ -1443,6 +1504,458 @@ PhysicsSystemSettings :: struct {
     broadPhaseLayerInterface : *BroadPhaseLayerInterface;
     objectVsBroadPhaseLayerFilter : *ObjectVsBroadPhaseLayerFilter;
     objectLayerPairFilter : *ObjectLayerPairFilter;
+}
+
+SpringSettings :: struct {
+    mode : ESpringMode;
+    union {
+        frequency : float;
+        stiffness : float;
+    }
+    damping : float;
+}
+
+MotorSettings :: struct {
+    springSettings : SpringSettings;
+    minForceLimit : float;
+    maxForceLimit : float;
+    minTorqueLimit : float;
+    maxTorqueLimit : float;
+}
+
+ConstraintSettings :: struct {
+    enabled : bool;
+    constraintPriority : u32;
+    numVelocityStepsOverride : u32;
+    numPositionStepsOverride : u32;
+    drawConstraintSize : float;
+    userData : u64;
+}
+
+TwoBodyConstraintSettings :: struct {
+    #as using,except(base) base : ConstraintSettings;
+}
+
+ConeConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    point1 : RVec3;
+    twistAxis1 : Vec3;
+    point2 : RVec3;
+    twistAxis2 : Vec3;
+    halfConeAngle : float;
+
+    CreateConstraint :: (settings : *ConeConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_ConeConstraintSettings_CreateConstraint";
+}
+
+DistanceConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    point1 : RVec3;
+    point2 : RVec3;
+    minDistance : float;
+    maxDistance : float;
+    limitsSpringSettings : SpringSettings;
+
+    CreateConstraint :: (settings : *DistanceConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_DistanceConstraintSettings_CreateConstraint";
+}
+
+FixedConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    autoDetectPoint : bool;
+    point1 : RVec3;
+    axisX1 : Vec3;
+    axisY1 : Vec3;
+    point2 : RVec3;
+    axisX2 : Vec3;
+    axisY2 : Vec3;
+
+    CreateConstraint :: (settings : *FixedConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_FixedConstraintSettings_CreateConstraint";
+}
+
+GearConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    hingeAxis1 : Vec3;
+    hingeAxis2 : Vec3;
+    ratio : float;
+
+    CreateConstraint :: (settings : *GearConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_GearConstraintSettings_CreateConstraint";
+}
+
+HingeConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    point1 : RVec3;
+    hingeAxis1 : Vec3;
+    normalAxis1 : Vec3;
+    point2 : RVec3;
+    hingeAxis2 : Vec3;
+    normalAxis2 : Vec3;
+    limitsMin : float;
+    limitsMax : float;
+    limitsSpringSettings : SpringSettings;
+    maxFrictionTorque : float;
+    motorSettings : MotorSettings;
+
+    CreateConstraint :: (settings : *HingeConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_HingeConstraintSettings_CreateConstraint";
+}
+
+PathConstraintPath :: struct {
+    opaque : s8;
+
+    Destroy :: (path : *PathConstraintPath) -> void #foreign JoltC "JPH_PathConstraintPath_Destroy";
+    GetPathMaxFraction :: (path : *PathConstraintPath) -> float #foreign JoltC "JPH_PathConstraintPath_GetPathMaxFraction";
+    GetClosestPoint :: (path : *PathConstraintPath, position : Vec3, fractionHint : float) -> float #foreign JoltC "JPH_PathConstraintPath_GetClosestPoint";
+    GetPointOnPath :: (path : *PathConstraintPath, fraction : float, outPathPosition : *Vec3, outPathTangent : *Vec3, outPathNormal : *Vec3, outPathBinormal : *Vec3) -> void #foreign JoltC "JPH_PathConstraintPath_GetPointOnPath";
+    SetIsLooping :: (path : *PathConstraintPath, isLooping : bool) -> void #foreign JoltC "JPH_PathConstraintPath_SetIsLooping";
+    IsLooping :: (path : *PathConstraintPath) -> bool #foreign JoltC "JPH_PathConstraintPath_IsLooping";
+    DrawPath :: (path : *PathConstraintPath, renderer : *DebugRenderer, baseTransform : RMat44) -> void #foreign JoltC "JPH_PathConstraintPath_DrawPath";
+}
+
+PathConstraintPathHermite :: struct {
+    #as using,except(base) base : PathConstraintPath;
+
+    Create :: () -> *PathConstraintPathHermite #foreign JoltC "JPH_PathConstraintPathHermite_Create";
+
+    AddPoint :: (path : *PathConstraintPathHermite, position : Vec3, tangent : Vec3, normal : Vec3) -> void #foreign JoltC "JPH_PathConstraintPathHermite_AddPoint";
+}
+
+PathConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    path : *PathConstraintPath;
+    pathPosition : Vec3;
+    pathRotation : Quat;
+    pathFraction : float;
+    maxFrictionForce : float;
+    positionMotorSettings : MotorSettings;
+    rotationConstraintType : EPathRotationConstraintType;
+
+    CreateConstraint :: (settings : *PathConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_PathConstraintSettings_CreateConstraint";
+}
+
+PointConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    point1 : RVec3;
+    point2 : RVec3;
+
+    CreateConstraint :: (settings : *PointConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_PointConstraintSettings_CreateConstraint";
+}
+
+PulleyConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    bodyPoint1 : RVec3;
+    fixedPoint1 : RVec3;
+    bodyPoint2 : RVec3;
+    fixedPoint2 : RVec3;
+    ratio : float;
+    minLength : float;
+    maxLength : float;
+
+    CreateConstraint :: (settings : *PulleyConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_PulleyConstraintSettings_CreateConstraint";
+}
+
+RackAndPinionConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    hingeAxis : Vec3;
+    sliderAxis : Vec3;
+    ratio : float;
+
+    CreateConstraint :: (settings : *RackAndPinionConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_RackAndPinionConstraintSettings_CreateConstraint";
+}
+
+SixDOFConstraintSettings :: struct {
+    EAxis :: enum u32 {
+        TranslationX :: 0;
+        TranslationY :: 1;
+        TranslationZ :: 2;
+        RotationX :: 3;
+        RotationY :: 4;
+        RotationZ :: 5;
+        Num :: 6;
+        NumTranslation :: 3;
+    }
+
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    position1 : RVec3;
+    axisX1 : Vec3;
+    axisY1 : Vec3;
+    position2 : RVec3;
+    axisX2 : Vec3;
+    axisY2 : Vec3;
+    maxFriction : [6]float;
+    swingType : ESwingType;
+    limitMin : [6]float;
+    limitMax : [6]float;
+    limitsSpringSettings : [3]SpringSettings;
+    motorSettings : [6]MotorSettings;
+
+    CreateConstraint :: (settings : *SixDOFConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_SixDOFConstraintSettings_CreateConstraint";
+    MakeFreeAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis) -> void #foreign JoltC "JPH_SixDOFConstraintSettings_MakeFreeAxis";
+    IsFreeAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis) -> bool #foreign JoltC "JPH_SixDOFConstraintSettings_IsFreeAxis";
+    MakeFixedAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis) -> void #foreign JoltC "JPH_SixDOFConstraintSettings_MakeFixedAxis";
+    IsFixedAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis) -> bool #foreign JoltC "JPH_SixDOFConstraintSettings_IsFixedAxis";
+    SetLimitedAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis, min : float, max : float) -> void #foreign JoltC "JPH_SixDOFConstraintSettings_SetLimitedAxis";
+}
+
+SliderConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    autoDetectPoint : bool;
+    point1 : RVec3;
+    sliderAxis1 : Vec3;
+    normalAxis1 : Vec3;
+    point2 : RVec3;
+    sliderAxis2 : Vec3;
+    normalAxis2 : Vec3;
+    limitsMin : float;
+    limitsMax : float;
+    limitsSpringSettings : SpringSettings;
+    maxFrictionForce : float;
+    motorSettings : MotorSettings;
+
+    CreateConstraint :: (settings : *SliderConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_SliderConstraintSettings_CreateConstraint";
+}
+
+SwingTwistConstraintSettings :: struct {
+    #as using,except(base) base : TwoBodyConstraintSettings;
+    space : EConstraintSpace;
+    position1 : RVec3;
+    twistAxis1 : Vec3;
+    planeAxis1 : Vec3;
+    position2 : RVec3;
+    twistAxis2 : Vec3;
+    planeAxis2 : Vec3;
+    swingType : ESwingType;
+    normalHalfConeAngle : float;
+    planeHalfConeAngle : float;
+    twistMinAngle : float;
+    twistMaxAngle : float;
+    maxFrictionTorque : float;
+    swingMotorSettings : MotorSettings;
+    twistMotorSettings : MotorSettings;
+
+    CreateConstraint :: (settings : *SwingTwistConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_SwingTwistConstraintSettings_CreateConstraint";
+}
+
+Constraint :: struct {
+    opaque : s8;
+
+    Destroy :: (constraint : *Constraint) -> void #foreign JoltC "JPH_Constraint_Destroy";
+    GetType :: (constraint : *Constraint) -> EConstraintType #foreign JoltC "JPH_Constraint_GetType";
+    GetSubType :: (constraint : *Constraint) -> EConstraintSubType #foreign JoltC "JPH_Constraint_GetSubType";
+    GetConstraintPriority :: (constraint : *Constraint) -> u32 #foreign JoltC "JPH_Constraint_GetConstraintPriority";
+    SetConstraintPriority :: (constraint : *Constraint, priority : u32) -> void #foreign JoltC "JPH_Constraint_SetConstraintPriority";
+    GetNumVelocityStepsOverride :: (constraint : *Constraint) -> u32 #foreign JoltC "JPH_Constraint_GetNumVelocityStepsOverride";
+    SetNumVelocityStepsOverride :: (constraint : *Constraint, steps : u32) -> void #foreign JoltC "JPH_Constraint_SetNumVelocityStepsOverride";
+    GetNumPositionStepsOverride :: (constraint : *Constraint) -> u32 #foreign JoltC "JPH_Constraint_GetNumPositionStepsOverride";
+    SetNumPositionStepsOverride :: (constraint : *Constraint, steps : u32) -> void #foreign JoltC "JPH_Constraint_SetNumPositionStepsOverride";
+    SetEnabled :: (constraint : *Constraint, enabled : bool) -> void #foreign JoltC "JPH_Constraint_SetEnabled";
+    GetEnabled :: (constraint : *Constraint) -> bool #foreign JoltC "JPH_Constraint_GetEnabled";
+    GetDrawConstraintSize :: (constraint : *Constraint) -> float #foreign JoltC "JPH_Constraint_GetDrawConstraintSize";
+    SetDrawConstraintSize :: (constraint : *Constraint, inSize : float) -> void #foreign JoltC "JPH_Constraint_SetDrawConstraintSize";
+}
+
+TwoBodyConstraint :: struct {
+    #as using,except(base) base : Constraint;
+
+    GetBody1 :: (constraint : *TwoBodyConstraint) -> *Body #foreign JoltC "JPH_TwoBodyConstraint_GetBody1";
+    GetBody2 :: (constraint : *TwoBodyConstraint) -> *Body #foreign JoltC "JPH_TwoBodyConstraint_GetBody2";
+}
+
+ConeConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetHalfConeAngle :: (constraint : *ConeConstraint, halfConeAngle : float) -> void #foreign JoltC "JPH_ConeConstraint_SetHalfConeAngle";
+    GetCosHalfConeAngle :: (constraint : *ConeConstraint) -> float #foreign JoltC "JPH_ConeConstraint_GetCosHalfConeAngle";
+}
+
+DistanceConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetDistance :: (constraint : *DistanceConstraint, minDistance : float, maxDistance : float) -> void #foreign JoltC "JPH_DistanceConstraint_SetDistance";
+    GetMinDistance :: (constraint : *DistanceConstraint) -> float #foreign JoltC "JPH_DistanceConstraint_GetMinDistance";
+    GetMaxDistance :: (constraint : *DistanceConstraint) -> float #foreign JoltC "JPH_DistanceConstraint_GetMaxDistance";
+    GetLimitsSpringSettingsConst :: (constraint : *DistanceConstraint) -> *SpringSettings #foreign JoltC "JPH_DistanceConstraint_GetLimitsSpringSettingsConst";
+    GetLimitsSpringSettings :: (constraint : *DistanceConstraint) -> *SpringSettings #foreign JoltC "JPH_DistanceConstraint_GetLimitsSpringSettings";
+    SetLimitsSpringSettings :: (constraint : *DistanceConstraint, limitsSpringSettings : SpringSettings) -> void #foreign JoltC "JPH_DistanceConstraint_SetLimitsSpringSettings";
+}
+
+FixedConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+}
+
+GearConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetConstraints :: (constraint : *GearConstraint, gear1 : *Constraint, gear2 : *Constraint) -> void #foreign JoltC "JPH_GearConstraint_SetConstraints";
+}
+
+HingeConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    GetLocalSpacePoint1 :: (constraint : *HingeConstraint) -> Vec3 #foreign JoltC "JPH_HingeConstraint_GetLocalSpacePoint1";
+    GetLocalSpacePoint2 :: (constraint : *HingeConstraint) -> Vec3 #foreign JoltC "JPH_HingeConstraint_GetLocalSpacePoint2";
+    GetLocalSpaceHingeAxis1 :: (constraint : *HingeConstraint) -> Vec3 #foreign JoltC "JPH_HingeConstraint_GetLocalSpaceHingeAxis1";
+    GetLocalSpaceHingeAxis2 :: (constraint : *HingeConstraint) -> Vec3 #foreign JoltC "JPH_HingeConstraint_GetLocalSpaceHingeAxis2";
+    GetLocalSpaceNormalAxis1 :: (constraint : *HingeConstraint) -> Vec3 #foreign JoltC "JPH_HingeConstraint_GetLocalSpaceNormalAxis1";
+    GetLocalSpaceNormalAxis2 :: (constraint : *HingeConstraint) -> Vec3 #foreign JoltC "JPH_HingeConstraint_GetLocalSpaceNormalAxis2";
+    GetCurrentAngle :: (constraint : *HingeConstraint) -> float #foreign JoltC "JPH_HingeConstraint_GetCurrentAngle";
+    SetMaxFrictionTorque :: (constraint : *HingeConstraint, frictionTorque : float) -> void #foreign JoltC "JPH_HingeConstraint_SetMaxFrictionTorque";
+    GetMaxFrictionTorque :: (constraint : *HingeConstraint) -> float #foreign JoltC "JPH_HingeConstraint_GetMaxFrictionTorque";
+    GetMotorSettingsConst :: (constraint : *HingeConstraint) -> *MotorSettings #foreign JoltC "JPH_HingeConstraint_GetMotorSettingsConst";
+    GetMotorSettings :: (constraint : *HingeConstraint) -> *MotorSettings #foreign JoltC "JPH_HingeConstraint_GetMotorSettings";
+    SetMotorState :: (constraint : *HingeConstraint, state : EMotorState) -> void #foreign JoltC "JPH_HingeConstraint_SetMotorState";
+    GetMotorState :: (constraint : *HingeConstraint) -> EMotorState #foreign JoltC "JPH_HingeConstraint_GetMotorState";
+    SetTargetAngularVelocity :: (constraint : *HingeConstraint, angularVelocity : float) -> void #foreign JoltC "JPH_HingeConstraint_SetTargetAngularVelocity";
+    GetTargetAngularVelocity :: (constraint : *HingeConstraint) -> float #foreign JoltC "JPH_HingeConstraint_GetTargetAngularVelocity";
+    SetTargetAngle :: (constraint : *HingeConstraint, angle : float) -> void #foreign JoltC "JPH_HingeConstraint_SetTargetAngle";
+    GetTargetAngle :: (constraint : *HingeConstraint) -> float #foreign JoltC "JPH_HingeConstraint_GetTargetAngle";
+    SetTargetOrientationBS :: (constraint : *HingeConstraint, orientation : Quat) -> void #foreign JoltC "JPH_HingeConstraint_SetTargetOrientationBS";
+    SetLimits :: (constraint : *HingeConstraint, limitsMin : float, limitsMax : float) -> void #foreign JoltC "JPH_HingeConstraint_SetLimits";
+    GetLimitsMin :: (constraint : *HingeConstraint) -> float #foreign JoltC "JPH_HingeConstraint_GetLimitsMin";
+    GetLimitsMax :: (constraint : *HingeConstraint) -> float #foreign JoltC "JPH_HingeConstraint_GetLimitsMax";
+    HasLimits :: (constraint : *HingeConstraint) -> bool #foreign JoltC "JPH_HingeConstraint_HasLimits";
+    GetLimitsSpringSettingsConst :: (constraint : *HingeConstraint) -> *SpringSettings #foreign JoltC "JPH_HingeConstraint_GetLimitsSpringSettingsConst";
+    GetLimitsSpringSettings :: (constraint : *HingeConstraint) -> *SpringSettings #foreign JoltC "JPH_HingeConstraint_GetLimitsSpringSettings";
+    SetLimitsSpringSettings :: (constraint : *HingeConstraint, limitsSpringSettings : SpringSettings) -> void #foreign JoltC "JPH_HingeConstraint_SetLimitsSpringSettings";
+}
+
+PathConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetPath :: (constraint : *PathConstraint, path : *PathConstraintPath, pathFraction : float) -> void #foreign JoltC "JPH_PathConstraint_SetPath";
+    GetPath :: (constraint : *PathConstraint) -> *PathConstraintPath #foreign JoltC "JPH_PathConstraint_GetPath";
+    GetPathFraction :: (constraint : *PathConstraint) -> float #foreign JoltC "JPH_PathConstraint_GetPathFraction";
+    SetMaxFrictionForce :: (constraint : *PathConstraint, frictionForce : float) -> void #foreign JoltC "JPH_PathConstraint_SetMaxFrictionForce";
+    GetMaxFrictionForce :: (constraint : *PathConstraint) -> float #foreign JoltC "JPH_PathConstraint_GetMaxFrictionForce";
+    GetPositionMotorSettingsConst :: (constraint : *PathConstraint) -> *MotorSettings #foreign JoltC "JPH_PathConstraint_GetPositionMotorSettingsConst";
+    GetPositionMotorSettings :: (constraint : *PathConstraint) -> *MotorSettings #foreign JoltC "JPH_PathConstraint_GetPositionMotorSettings";
+    SetPositionMotorState :: (constraint : *PathConstraint, state : EMotorState) -> void #foreign JoltC "JPH_PathConstraint_SetPositionMotorState";
+    GetPositionMotorState :: (constraint : *PathConstraint) -> EMotorState #foreign JoltC "JPH_PathConstraint_GetPositionMotorState";
+    SetTargetVelocity :: (constraint : *PathConstraint, velocity : float) -> void #foreign JoltC "JPH_PathConstraint_SetTargetVelocity";
+    GetTargetVelocity :: (constraint : *PathConstraint) -> float #foreign JoltC "JPH_PathConstraint_GetTargetVelocity";
+    SetTargetPathFraction :: (constraint : *PathConstraint, fraction : float) -> void #foreign JoltC "JPH_PathConstraint_SetTargetPathFraction";
+    GetTargetPathFraction :: (constraint : *PathConstraint) -> float #foreign JoltC "JPH_PathConstraint_GetTargetPathFraction";
+}
+
+PointConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetPoint1 :: (constraint : *PointConstraint, space : EConstraintSpace, point1 : RVec3) -> void #foreign JoltC "JPH_PointConstraint_SetPoint1";
+    SetPoint2 :: (constraint : *PointConstraint, space : EConstraintSpace, point2 : RVec3) -> void #foreign JoltC "JPH_PointConstraint_SetPoint2";
+    GetLocalSpacePoint1 :: (constraint : *PointConstraint) -> Vec3 #foreign JoltC "JPH_PointConstraint_GetLocalSpacePoint1";
+    GetLocalSpacePoint2 :: (constraint : *PointConstraint) -> Vec3 #foreign JoltC "JPH_PointConstraint_GetLocalSpacePoint2";
+}
+
+PulleyConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetLength :: (constraint : *PulleyConstraint, minLength : float, maxLength : float) -> void #foreign JoltC "JPH_PulleyConstraint_SetLength";
+    GetMinLength :: (constraint : *PulleyConstraint) -> float #foreign JoltC "JPH_PulleyConstraint_GetMinLength";
+    GetMaxLength :: (constraint : *PulleyConstraint) -> float #foreign JoltC "JPH_PulleyConstraint_GetMaxLength";
+    GetCurrentLength :: (constraint : *PulleyConstraint) -> float #foreign JoltC "JPH_PulleyConstraint_GetCurrentLength";
+}
+
+RackAndPinionConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetConstraints :: (constraints : *RackAndPinionConstraint, pinion : *Constraint, rack : *Constraint) -> void #foreign JoltC "JPH_RackAndPinionConstraint_SetConstraints";
+}
+
+SixDOFConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    SetTranslationLimits :: (constraint : *SixDOFConstraint, limitMin : Vec3, limitMax : Vec3) -> void #foreign JoltC "JPH_SixDOFConstraint_SetTranslationLimits";
+    SetRotationLimits :: (constraint : *SixDOFConstraint, limitMin : Vec3, limitMax : Vec3) -> void #foreign JoltC "JPH_SixDOFConstraint_SetRotationLimits";
+    GetLimitsMin :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> float #foreign JoltC "JPH_SixDOFConstraint_GetLimitsMin";
+    GetLimitsMax :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> float #foreign JoltC "JPH_SixDOFConstraint_GetLimitsMax";
+    GetTranslationLimitsMin :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetTranslationLimitsMin";
+    GetTranslationLimitsMax :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetTranslationLimitsMax";
+    GetRotationLimitsMin :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetRotationLimitsMin";
+    GetRotationLimitsMax :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetRotationLimitsMax";
+    IsFixedAxis :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> bool #foreign JoltC "JPH_SixDOFConstraint_IsFixedAxis";
+    IsFreeAxis :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> bool #foreign JoltC "JPH_SixDOFConstraint_IsFreeAxis";
+    GetLimitsSpringSettings :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> *SpringSettings #foreign JoltC "JPH_SixDOFConstraint_GetLimitsSpringSettings";
+    SetLimitsSpringSettings :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis, limitsSpringSettings : SpringSettings) -> void #foreign JoltC "JPH_SixDOFConstraint_SetLimitsSpringSettings";
+    SetMaxFriction :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis, friction : float) -> void #foreign JoltC "JPH_SixDOFConstraint_SetMaxFriction";
+    GetMaxFriction :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> float #foreign JoltC "JPH_SixDOFConstraint_GetMaxFriction";
+    GetRotationInConstraintSpace :: (constraint : *SixDOFConstraint) -> Quat #foreign JoltC "JPH_SixDOFConstraint_GetRotationInConstraintSpace";
+    GetMotorSettings :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> *MotorSettings #foreign JoltC "JPH_SixDOFConstraint_GetMotorSettings";
+    GetMotorSettingsConst :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> *MotorSettings #foreign JoltC "JPH_SixDOFConstraint_GetMotorSettingsConst";
+    SetMotorState :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis, state : EMotorState) -> void #foreign JoltC "JPH_SixDOFConstraint_SetMotorState";
+    GetMotorState :: (constraint : *SixDOFConstraint, axis : SixDOFConstraintSettings.EAxis) -> EMotorState #foreign JoltC "JPH_SixDOFConstraint_GetMotorState";
+    GetTargetVelocityCS :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetTargetVelocityCS";
+    SetTargetVelocityCS :: (constraint : *SixDOFConstraint, velocity : Vec3) -> void #foreign JoltC "JPH_SixDOFConstraint_SetTargetVelocityCS";
+    SetTargetAngularVelocityCS :: (constraint : *SixDOFConstraint, angularVelocity : Vec3) -> void #foreign JoltC "JPH_SixDOFConstraint_SetTargetAngularVelocityCS";
+    GetTargetAngularVelocityCS :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetTargetAngularVelocityCS";
+    GetTargetPositionCS :: (constraint : *SixDOFConstraint) -> Vec3 #foreign JoltC "JPH_SixDOFConstraint_GetTargetPositionCS";
+    SetTargetPositionCS :: (constraint : *SixDOFConstraint, position : Vec3) -> void #foreign JoltC "JPH_SixDOFConstraint_SetTargetPositionCS";
+    SetTargetOrientationCS :: (constraint : *SixDOFConstraint, prientation : Quat) -> void #foreign JoltC "JPH_SixDOFConstraint_SetTargetOrientationCS";
+    GetTargetOrientationCS :: (constraint : *SixDOFConstraint) -> Quat #foreign JoltC "JPH_SixDOFConstraint_GetTargetOrientationCS";
+    SetTargetOrientationBS :: (constraint : *SixDOFConstraint, orientation : Quat) -> void #foreign JoltC "JPH_SixDOFConstraint_SetTargetOrientationBS";
+}
+
+SliderConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    GetCurrentPosition :: (constraint : *SliderConstraint) -> float #foreign JoltC "JPH_SliderConstraint_GetCurrentPosition";
+    SetMaxFrictionForce :: (constraint : *SliderConstraint, frictionForce : float) -> void #foreign JoltC "JPH_SliderConstraint_SetMaxFrictionForce";
+    GetMaxFrictionForce :: (constraint : *SliderConstraint) -> float #foreign JoltC "JPH_SliderConstraint_GetMaxFrictionForce";
+    GetMotorSettings :: (constraint : *SliderConstraint) -> *MotorSettings #foreign JoltC "JPH_SliderConstraint_GetMotorSettings";
+    GetMotorSettingsConst :: (constraint : *SliderConstraint) -> *MotorSettings #foreign JoltC "JPH_SliderConstraint_GetMotorSettingsConst";
+    SetMotorState :: (constraint : *SliderConstraint, state : EMotorState) -> void #foreign JoltC "JPH_SliderConstraint_SetMotorState";
+    GetMotorState :: (constraint : *SliderConstraint) -> EMotorState #foreign JoltC "JPH_SliderConstraint_GetMotorState";
+    SetTargetVelocity :: (constraint : *SliderConstraint, velocity : float) -> void #foreign JoltC "JPH_SliderConstraint_SetTargetVelocity";
+    GetTargetVelocity :: (constraint : *SliderConstraint) -> float #foreign JoltC "JPH_SliderConstraint_GetTargetVelocity";
+    SetTargetPosition :: (constraint : *SliderConstraint, position : float) -> void #foreign JoltC "JPH_SliderConstraint_SetTargetPosition";
+    GetTargetPosition :: (constraint : *SliderConstraint) -> float #foreign JoltC "JPH_SliderConstraint_GetTargetPosition";
+    SetLimits :: (constraint : *SliderConstraint, limitsMin : float, limitsMax : float) -> void #foreign JoltC "JPH_SliderConstraint_SetLimits";
+    GetLimitsMin :: (constraint : *SliderConstraint) -> float #foreign JoltC "JPH_SliderConstraint_GetLimitsMin";
+    GetLimitsMax :: (constraint : *SliderConstraint) -> float #foreign JoltC "JPH_SliderConstraint_GetLimitsMax";
+    HasLimits :: (constraint : *SliderConstraint) -> bool #foreign JoltC "JPH_SliderConstraint_HasLimits";
+    GetLimitsSpringSettingsConst :: (constraint : *SliderConstraint) -> *SpringSettings #foreign JoltC "JPH_SliderConstraint_GetLimitsSpringSettingsConst";
+    GetLimitsSpringSettings :: (constraint : *SliderConstraint) -> *SpringSettings #foreign JoltC "JPH_SliderConstraint_GetLimitsSpringSettings";
+    SetLimitsSpringSettings :: (constraint : *SliderConstraint, limitsSpringSettings : SpringSettings) -> void #foreign JoltC "JPH_SliderConstraint_SetLimitsSpringSettings";
+}
+
+SwingTwistConstraint :: struct {
+    #as using,except(base) base : TwoBodyConstraint;
+
+    GetLocalSpacePosition1 :: (constraint : *SwingTwistConstraint) -> Vec3 #foreign JoltC "JPH_SwingTwistConstraint_GetLocalSpacePosition1";
+    GetLocalSpacePosition2 :: (constraint : *SwingTwistConstraint) -> Vec3 #foreign JoltC "JPH_SwingTwistConstraint_GetLocalSpacePosition2";
+    GetConstraintToBody1 :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetConstraintToBody1";
+    GetConstraintToBody2 :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetConstraintToBody2";
+    GetNormalHalfConeAngle :: (constraint : *SwingTwistConstraint) -> float #foreign JoltC "JPH_SwingTwistConstraint_GetNormalHalfConeAngle";
+    SetNormalHalfConeAngle :: (constraint : *SwingTwistConstraint, angle : float) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetNormalHalfConeAngle";
+    GetPlaneHalfConeAngle :: (constraint : *SwingTwistConstraint) -> float #foreign JoltC "JPH_SwingTwistConstraint_GetPlaneHalfConeAngle";
+    SetPlaneHalfConeAngle :: (constraint : *SwingTwistConstraint, angle : float) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetPlaneHalfConeAngle";
+    GetTwistMinAngle :: (constraint : *SwingTwistConstraint) -> float #foreign JoltC "JPH_SwingTwistConstraint_GetTwistMinAngle";
+    SetTwistMinAngle :: (constraint : *SwingTwistConstraint, angle : float) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTwistMinAngle";
+    GetTwistMaxAngle :: (constraint : *SwingTwistConstraint) -> float #foreign JoltC "JPH_SwingTwistConstraint_GetTwistMaxAngle";
+    SetTwistMaxAngle :: (constraint : *SwingTwistConstraint, angle : float) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTwistMaxAngle";
+    GetSwingMotorSettingsConst :: (constraint : *SwingTwistConstraint) -> *MotorSettings #foreign JoltC "JPH_SwingTwistConstraint_GetSwingMotorSettingsConst";
+    GetSwingMotorSettings :: (constraint : *SwingTwistConstraint) -> *MotorSettings #foreign JoltC "JPH_SwingTwistConstraint_GetSwingMotorSettings";
+    GetTwistMotorSettingsConst :: (constraint : *SwingTwistConstraint) -> *MotorSettings #foreign JoltC "JPH_SwingTwistConstraint_GetTwistMotorSettingsConst";
+    GetTwistMotorSettings :: (constraint : *SwingTwistConstraint) -> *MotorSettings #foreign JoltC "JPH_SwingTwistConstraint_GetTwistMotorSettings";
+    SetMaxFrictionTorque :: (constraint : *SwingTwistConstraint, frictionTorque : float) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetMaxFrictionTorque";
+    GetMaxFrictionTorque :: (constraint : *SwingTwistConstraint) -> float #foreign JoltC "JPH_SwingTwistConstraint_GetMaxFrictionTorque";
+    SetSwingMotorState :: (constraint : *SwingTwistConstraint, state : EMotorState) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetSwingMotorState";
+    GetSwingMotorState :: (constraint : *SwingTwistConstraint) -> EMotorState #foreign JoltC "JPH_SwingTwistConstraint_GetSwingMotorState";
+    SetTwistMotorState :: (constraint : *SwingTwistConstraint, state : EMotorState) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTwistMotorState";
+    GetTwistMotorState :: (constraint : *SwingTwistConstraint) -> EMotorState #foreign JoltC "JPH_SwingTwistConstraint_GetTwistMotorState";
+    SetTargetAngularVelocityCS :: (constraint : *SwingTwistConstraint, angularVelocity : Vec3) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTargetAngularVelocityCS";
+    GetTargetAngularVelocityCS :: (constraint : *SwingTwistConstraint) -> Vec3 #foreign JoltC "JPH_SwingTwistConstraint_GetTargetAngularVelocityCS";
+    SetTargetAngularVelocityBS :: (constraint : *SwingTwistConstraint, angularVelocity : Vec3) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTargetAngularVelocityBS";
+    SetTargetOrientationCS :: (constraint : *SwingTwistConstraint, orientation : Quat) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTargetOrientationCS";
+    GetTargetOrientationCS :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetTargetOrientationCS";
+    SetTargetOrientationBS :: (constraint : *SwingTwistConstraint, orientation : Quat) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTargetOrientationBS";
+    GetRotationInConstraintSpace :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetRotationInConstraintSpace";
 }
 
 // Functions

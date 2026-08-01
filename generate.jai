@@ -176,6 +176,10 @@ GenerateBindings :: (options : JoltCompileOptions) -> bool {
             return false;
         }
 
+        if (bindgen_error != "") {
+            log("%", bindgen_error);
+        }
+
         result = bindgen_result;
     }
 
