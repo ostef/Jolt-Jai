@@ -192,10 +192,6 @@ BuildJoltC :: (options : JoltCompileOptions) -> bool {
 
         set_working_directory(tprint("%/Source/JoltC", working_dir));
 
-        if run_command("rm", "-rf", ".build").exit_code != 0 {
-            return false;
-        }
-
         configure : [..]string;
         array_add(*configure, "cmake", "-B", ".build");
         array_add(*configure, tprint("-DBUILD_SHARED_LIBS=%", ifx options & .SharedLibs then "ON" else "OFF"));
