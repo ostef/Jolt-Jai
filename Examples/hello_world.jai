@@ -133,7 +133,7 @@ main :: () {
         };
 
         ray_cast_result := Jolt.RayCastResult.Default();
-        hit := Jolt.NarrowPhaseQuery.CastRay(query, ray, *ray_cast_result, null, null, null);
+        hit := Jolt.NarrowPhaseQuery.CastRayClosest(query, ray, *ray_cast_result, null, null, null);
 
         if (hit) {
             hit_point := ray.GetPointOnRay(*ray, ray_cast_result.fraction);

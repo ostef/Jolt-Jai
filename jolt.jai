@@ -132,6 +132,16 @@ ECollisionCollectorType :: enum u32 {
     AllHits :: 3;
 }
 
+EActiveEdgeMode :: enum u8 {
+    CollideOnlyWithActive :: 0;
+    CollideWithAll :: 1;
+}
+
+ECollectFacesMode :: enum u8 {
+    CollectFaces :: 0;
+    NoFaces :: 1;
+}
+
 EBodyType :: enum u8 {
     RigidBody :: 0;
     SoftBody :: 1;
@@ -805,6 +815,20 @@ MassProperties :: struct {
     Scale :: (massProperties : *MassProperties, scale : Vec3) -> void #foreign JoltC "JPH_MassProperties_Scale";
 }
 
+SubShapeIDCreator :: struct {
+    id : SubShapeID;
+    currentBit : u32;
+}
+
+TransformedShape :: struct {
+    shapePositionCOM : RVec3;
+    shapeRotation : Quat;
+    shape : *Shape;
+    shapeScale : Float3;
+    bodyID : BodyID;
+    subShapeIDCreator : SubShapeIDCreator;
+}
+
 Body :: struct {
     GetID :: (body : *Body) -> BodyID #foreign JoltC "JPH_Body_GetID";
     GetBodyType :: (body : *Body) -> EBodyType #foreign JoltC "JPH_Body_GetBodyType";
@@ -1073,11 +1097,23 @@ BroadPhaseQuery :: struct {
     CastRayCollectCallback :: #type (*void, *BroadPhaseCastResult) -> float #c_call;
 
     GetBounds :: (query : *BroadPhaseQuery) -> AABox #foreign JoltC "JPH_BroadPhaseQuery_GetBounds";
-    CastRay :: (query : *BroadPhaseQuery, ray : RayCast, collectorType : ECollisionCollectorType, callbackData : *void, callback : BroadPhaseQuery.CastRayHitCallback, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> bool #foreign JoltC "JPH_BroadPhaseQuery_CastRay";
+    CastRaySimple :: (query : *BroadPhaseQuery, ray : RayCast, collectorType : ECollisionCollectorType, callbackData : *void, callback : BroadPhaseQuery.CastRayHitCallback, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> bool #foreign JoltC "JPH_BroadPhaseQuery_CastRaySimple";
+    CastRay :: (query : *BroadPhaseQuery, ray : RayCast, collector : *RayCastBodyCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> void #foreign JoltC "JPH_BroadPhaseQuery_CastRay";
+    CollideAABox :: (query : *BroadPhaseQuery, box : AABox, collector : *CollideShapeBodyCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> void #foreign JoltC "JPH_BroadPhaseQuery_CollideAABox";
+    CollideSphere :: (query : *BroadPhaseQuery, center : Vec3, radius : float, collector : *CollideShapeBodyCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> void #foreign JoltC "JPH_BroadPhaseQuery_CollideSphere";
+    CollidePoint :: (query : *BroadPhaseQuery, point : Vec3, collector : *CollideShapeBodyCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> void #foreign JoltC "JPH_BroadPhaseQuery_CollidePoint";
+    CollideOrientedBox :: (query : *BroadPhaseQuery, box : OrientedBox, collector : *CollideShapeBodyCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> void #foreign JoltC "JPH_BroadPhaseQuery_CollideOrientedBox";
+    CastAABox :: (query : *BroadPhaseQuery, box : AABoxCast, collector : *CastShapeBodyCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter) -> void #foreign JoltC "JPH_BroadPhaseQuery_CastAABox";
 }
 
 NarrowPhaseQuery :: struct {
-    CastRay :: (query : *NarrowPhaseQuery, ray : RRayCast, ioHit : *RayCastResult, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter) -> bool #foreign JoltC "JPH_NarrowPhaseQuery_CastRay";
+    CastRayClosest :: (query : *NarrowPhaseQuery, ray : RRayCast, ioHit : *RayCastResult, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter) -> bool #foreign JoltC "JPH_NarrowPhaseQuery_CastRayClosest";
+    CastRay :: (query : *NarrowPhaseQuery, ray : RRayCast, settings : RayCastSettings, collector : *CastRayCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_NarrowPhaseQuery_CastRay";
+    CollidePoint :: (query : *NarrowPhaseQuery, point : RVec3, collector : *CollidePointCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_NarrowPhaseQuery_CollidePoint";
+    CollideShape :: (query : *NarrowPhaseQuery, shape : *Shape, shapeScale : Vec3, centerOfMassTransform : RMat44, settings : CollideShapeSettings, baseOffset : RVec3, collector : *CollideShapeCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_NarrowPhaseQuery_CollideShape";
+    CollideShapeWithInternalEdgeRemoval :: (query : *NarrowPhaseQuery, shape : *Shape, shapeScale : Vec3, centerOfMassTransform : RMat44, settings : CollideShapeSettings, baseOffset : RVec3, collector : *CollideShapeCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_NarrowPhaseQuery_CollideShapeWithInternalEdgeRemoval";
+    CastShape :: (query : *NarrowPhaseQuery, shapeCast : RShapeCast, shapeCastSettings : ShapeCastSettings, baseOffset : RVec3, collector : *CastShapeCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_NarrowPhaseQuery_CastShape";
+    CollectTransformedShapes :: (query : *NarrowPhaseQuery, box : AABox, collector : *TransformedShapeCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_NarrowPhaseQuery_CollectTransformedShapes";
 }
 
 CollisionGroup :: struct {
@@ -1149,6 +1185,193 @@ RayCastResult :: struct {
     subShapeID2 : SubShapeID;
 
     Default :: () -> RayCastResult #foreign JoltC "JPH_RayCastResult_Default";
+}
+
+CollidePointResult :: struct {
+    bodyID : BodyID;
+    subShapeID : SubShapeID;
+}
+
+CollideShapeResult :: struct {
+    Face :: struct {
+        size : u64;
+        elements : [32]Vec3;
+    }
+
+    contactPointOn1 : Vec3;
+    contactPointOn2 : Vec3;
+    penetrationAxis : Vec3;
+    penetrationDepth : float;
+    subShapeID1 : SubShapeID;
+    subShapeID2 : SubShapeID;
+    bodyID2 : BodyID;
+    shape1Face : CollideShapeResult.Face;
+    shape2Face : CollideShapeResult.Face;
+}
+
+ShapeCastResult :: struct {
+    contactPointOn1 : Vec3;
+    contactPointOn2 : Vec3;
+    penetrationAxis : Vec3;
+    penetrationDepth : float;
+    subShapeID1 : SubShapeID;
+    subShapeID2 : SubShapeID;
+    bodyID2 : BodyID;
+    shape1Face : CollideShapeResult.Face;
+    shape2Face : CollideShapeResult.Face;
+    fraction : float;
+    isBackFaceHit : bool;
+}
+
+CollideSettingsBase :: struct {
+    activeEdgeMode : EActiveEdgeMode;
+    collectFacesMode : ECollectFacesMode;
+    collisionTolerance : float;
+    penetrationTolerance : float;
+    activeEdgeMovementDirection : Vec3;
+}
+
+ShapeCastSettings :: struct {
+    activeEdgeMode : EActiveEdgeMode;
+    collectFacesMode : ECollectFacesMode;
+    collisionTolerance : float;
+    penetrationTolerance : float;
+    activeEdgeMovementDirection : Vec3;
+    extraConvexRadius : float;
+    backFaceModeTriangles : EBackFaceMode;
+    backFaceModeConvex : EBackFaceMode;
+    useShrunkenShapeAndConvexRadius : bool;
+    returnDeepestPoint : bool;
+}
+
+CollideShapeSettings :: struct {
+    activeEdgeMode : EActiveEdgeMode;
+    collectFacesMode : ECollectFacesMode;
+    collisionTolerance : float;
+    penetrationTolerance : float;
+    activeEdgeMovementDirection : Vec3;
+    maxSeparationDistance : float;
+    backFaceMode : EBackFaceMode;
+    internalEdgeRemovalVertexToleranceSq : float;
+}
+
+RShapeCast :: struct {
+    shape : *Shape;
+    scale : Vec3;
+    centerOfMassStart : RMat44;
+    direction : Vec3;
+    shapeWorldBounds : AABox;
+}
+
+CollisionCollector_BodyID_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, BodyID) -> void #c_call;
+}
+
+CollisionCollector_BroadPhaseCastResult_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, BroadPhaseCastResult) -> void #c_call;
+}
+
+CollisionCollector_RayCastResult_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, RayCastResult) -> void #c_call;
+}
+
+CollisionCollector_ShapeCastResult_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, ShapeCastResult) -> void #c_call;
+}
+
+CollisionCollector_CollidePointResult_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, CollidePointResult) -> void #c_call;
+}
+
+CollisionCollector_CollideShapeResult_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, CollideShapeResult) -> void #c_call;
+}
+
+CollisionCollector_TransformedShape_Funcs :: struct {
+    Destruct : #type (*void) -> void #c_call;
+    Reset : #type (*void) -> void #c_call;
+    OnBody : #type (*void, *Body) -> void #c_call;
+    OnBodyEnd : #type (*void) -> void #c_call;
+    SetUserData : #type (*void, u64) -> void #c_call;
+    AddHit : #type (*void, TransformedShape) -> void #c_call;
+}
+
+RayCastBodyCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_BroadPhaseCastResult_Funcs, allocator : JoltCAllocator) -> *RayCastBodyCollector #foreign JoltC "JPH_RayCastBodyCollector_Create";
+
+    Destroy :: (self : *RayCastBodyCollector) -> void #foreign JoltC "JPH_RayCastBodyCollector_Destroy";
+}
+
+CastShapeBodyCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_BroadPhaseCastResult_Funcs, allocator : JoltCAllocator) -> *CastShapeBodyCollector #foreign JoltC "JPH_CastShapeBodyCollector_Create";
+
+    Destroy :: (self : *CastShapeBodyCollector) -> void #foreign JoltC "JPH_CastShapeBodyCollector_Destroy";
+}
+
+CollideShapeBodyCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_BodyID_Funcs, allocator : JoltCAllocator) -> *CollideShapeBodyCollector #foreign JoltC "JPH_CollideShapeBodyCollector_Create";
+
+    Destroy :: (self : *CollideShapeBodyCollector) -> void #foreign JoltC "JPH_CollideShapeBodyCollector_Destroy";
+}
+
+CastRayCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_RayCastResult_Funcs, allocator : JoltCAllocator) -> *CastRayCollector #foreign JoltC "JPH_CastRayCollector_Create";
+
+    Destroy :: (self : *CastRayCollector) -> void #foreign JoltC "JPH_CastRayCollector_Destroy";
+}
+
+CastShapeCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_ShapeCastResult_Funcs, allocator : JoltCAllocator) -> *CastShapeCollector #foreign JoltC "JPH_CastShapeCollector_Create";
+
+    Destroy :: (self : *CastShapeCollector) -> void #foreign JoltC "JPH_CastShapeCollector_Destroy";
+}
+
+CollidePointCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_CollidePointResult_Funcs, allocator : JoltCAllocator) -> *CollidePointCollector #foreign JoltC "JPH_CollidePointCollector_Create";
+
+    Destroy :: (self : *CollidePointCollector) -> void #foreign JoltC "JPH_CollidePointCollector_Destroy";
+}
+
+CollideShapeCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_CollideShapeResult_Funcs, allocator : JoltCAllocator) -> *CollideShapeCollector #foreign JoltC "JPH_CollideShapeCollector_Create";
+
+    Destroy :: (self : *CollideShapeCollector) -> void #foreign JoltC "JPH_CollideShapeCollector_Destroy";
+}
+
+TransformedShapeCollector :: struct {
+    Create :: (data : *void, funcs : CollisionCollector_TransformedShape_Funcs, allocator : JoltCAllocator) -> *TransformedShapeCollector #foreign JoltC "JPH_TransformedShapeCollector_Create";
+
+    Destroy :: (self : *TransformedShapeCollector) -> void #foreign JoltC "JPH_TransformedShapeCollector_Destroy";
 }
 
 BodyInterface :: struct {
