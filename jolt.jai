@@ -1488,6 +1488,8 @@ PhysicsSystem :: struct {
     RemoveConstraint :: (system : *PhysicsSystem, constraint : *Constraint) -> void #foreign JoltC "JPH_PhysicsSystem_RemoveConstraint";
     AddConstraints :: (system : *PhysicsSystem, constraints : **Constraint, numConstraints : s32) -> void #foreign JoltC "JPH_PhysicsSystem_AddConstraints";
     RemoveConstraints :: (system : *PhysicsSystem, constraints : **Constraint, numConstraints : s32) -> void #foreign JoltC "JPH_PhysicsSystem_RemoveConstraints";
+    AddStepListener :: (system : *PhysicsSystem, listener : *PhysicsStepListener) -> void #foreign JoltC "JPH_PhysicsSystem_AddStepListener";
+    RemoveStepListener :: (system : *PhysicsSystem, listener : *PhysicsStepListener) -> void #foreign JoltC "JPH_PhysicsSystem_RemoveStepListener";
     OptimizeBroadPhase :: (system : *PhysicsSystem) -> void #foreign JoltC "JPH_PhysicsSystem_OptimizeBroadPhase";
     Update :: (system : *PhysicsSystem, deltaTime : float, collisionSteps : s32, tempAllocator : *TempAllocator, jobSystem : *JobSystem) -> EPhysicsUpdateError #foreign JoltC "JPH_PhysicsSystem_Update";
     DrawBodies :: (system : *PhysicsSystem, settings : *BodyManager.DrawSettings, renderer : *DebugRenderer, bodyFilter : *BodyDrawFilter) -> void #foreign JoltC "JPH_PhysicsSystem_DrawBodies";
@@ -1504,6 +1506,24 @@ PhysicsSystemSettings :: struct {
     broadPhaseLayerInterface : *BroadPhaseLayerInterface;
     objectVsBroadPhaseLayerFilter : *ObjectVsBroadPhaseLayerFilter;
     objectLayerPairFilter : *ObjectLayerPairFilter;
+}
+
+PhysicsStepListenerContext :: struct {
+    deltaTime : float;
+    isFirstStep : bool;
+    isLastStep : bool;
+    physicsSystem : *PhysicsSystem;
+}
+
+PhysicsStepListener :: struct {
+    Funcs :: struct {
+        Destruct : #type (*void) -> void #c_call;
+        OnStep : #type (*void, *PhysicsStepListenerContext) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : PhysicsStepListener.Funcs, allocator : JoltCAllocator) -> *PhysicsStepListener #foreign JoltC "JPH_PhysicsStepListener_Create";
+
+    Destroy :: (listener : *PhysicsStepListener) -> void #foreign JoltC "JPH_PhysicsStepListener_Destroy";
 }
 
 SpringSettings :: struct {
