@@ -33,6 +33,7 @@ cDefaultInternalEdgeRemovalVertexToleranceSq :: 1.0e-8;
 cMaxPhysicsJobs :: 2048;
 cMaxPhysicsBarriers :: 8;
 cInvalidBodyID :: 0xfffffff;
+CharacterID_cInvalidCharacterID :: 0xfffffff;
 
 // Typedefs
 
@@ -51,6 +52,7 @@ BodyID :: u32;
 SubShapeID :: u32;
 BroadPhaseLayer :: u8;
 ObjectLayer :: u16;
+CharacterID :: u32;
 
 // Enums
 
@@ -254,6 +256,13 @@ EPathRotationConstraintType :: enum u32 {
 ESwingType :: enum u8 {
     Cone :: 0;
     Pyramid :: 1;
+}
+
+ECharacterGroundState :: enum u32 {
+    OnGround :: 0;
+    OnSteepGround :: 1;
+    NotSupported :: 2;
+    InAir :: 3;
 }
 
 // Structs
@@ -2199,6 +2208,219 @@ SwingTwistConstraint :: struct {
     GetTargetOrientationCS :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetTargetOrientationCS";
     SetTargetOrientationBS :: (constraint : *SwingTwistConstraint, orientation : Quat) -> void #foreign JoltC "JPH_SwingTwistConstraint_SetTargetOrientationBS";
     GetRotationInConstraintSpace :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetRotationInConstraintSpace";
+}
+
+CharacterBaseSettings :: struct {
+    up : Vec3;
+    supportingVolume : Plane;
+    maxSlopeAngle : float;
+    enhancedInternalEdgeRemoval : bool;
+    shape : *Shape;
+}
+
+CharacterBase :: struct {
+    opaque : s8;
+
+    Destroy :: (character : *CharacterBase) -> void #foreign JoltC "JPH_CharacterBase_Destroy";
+    Release :: (character : *CharacterBase) -> void #foreign JoltC "JPH_CharacterBase_Release";
+    SetMaxSlopeAngle :: (character : *CharacterBase, maxSlopeAngle : float) -> void #foreign JoltC "JPH_CharacterBase_SetMaxSlopeAngle";
+    GetCosMaxSlopeAngle :: (character : *CharacterBase) -> float #foreign JoltC "JPH_CharacterBase_GetCosMaxSlopeAngle";
+    SetUp :: (character : *CharacterBase, up : Vec3) -> void #foreign JoltC "JPH_CharacterBase_SetUp";
+    GetUp :: (character : *CharacterBase) -> Vec3 #foreign JoltC "JPH_CharacterBase_GetUp";
+    GetSupportingVolume :: (character : *CharacterBase) -> Plane #foreign JoltC "JPH_CharacterBase_GetSupportingVolume";
+    SetSupportingVolume :: (character : *CharacterBase, plane : Plane) -> void #foreign JoltC "JPH_CharacterBase_SetSupportingVolume";
+    IsSlopeTooSteep :: (character : *CharacterBase, normal : Vec3) -> bool #foreign JoltC "JPH_CharacterBase_IsSlopeTooSteep";
+    GetShape :: (character : *CharacterBase) -> *Shape #foreign JoltC "JPH_CharacterBase_GetShape";
+    GetGroundState :: (character : *CharacterBase) -> ECharacterGroundState #foreign JoltC "JPH_CharacterBase_GetGroundState";
+    IsSupported :: (character : *CharacterBase) -> bool #foreign JoltC "JPH_CharacterBase_IsSupported";
+    GetGroundPosition :: (character : *CharacterBase) -> RVec3 #foreign JoltC "JPH_CharacterBase_GetGroundPosition";
+    GetGroundNormal :: (character : *CharacterBase) -> Vec3 #foreign JoltC "JPH_CharacterBase_GetGroundNormal";
+    GetGroundVelocity :: (character : *CharacterBase) -> Vec3 #foreign JoltC "JPH_CharacterBase_GetGroundVelocity";
+    GetGroundMaterial :: (character : *CharacterBase) -> *PhysicsMaterial #foreign JoltC "JPH_CharacterBase_GetGroundMaterial";
+    GetGroundBodyID :: (character : *CharacterBase) -> BodyID #foreign JoltC "JPH_CharacterBase_GetGroundBodyID";
+    GetGroundSubShapeID :: (character : *CharacterBase) -> SubShapeID #foreign JoltC "JPH_CharacterBase_GetGroundSubShapeID";
+    GetGroundUserData :: (character : *CharacterBase) -> u64 #foreign JoltC "JPH_CharacterBase_GetGroundUserData";
+}
+
+CharacterSettings :: struct {
+    up : Vec3;
+    supportingVolume : Plane;
+    maxSlopeAngle : float;
+    enhancedInternalEdgeRemoval : bool;
+    shape : *Shape;
+    layer : ObjectLayer;
+    mass : float;
+    friction : float;
+    gravityFactor : float;
+    allowedDOFs : EAllowedDOFs;
+}
+
+Character :: struct {
+    #as using,except(base) base : CharacterBase;
+
+    Create :: (settings : *CharacterSettings, position : RVec3, rotation : Quat, userData : u64, system : *PhysicsSystem) -> *Character #foreign JoltC "JPH_Character_Create";
+
+    AddToPhysicsSystem :: (character : *Character, activationMode : EActivation, lockBodies : bool) -> void #foreign JoltC "JPH_Character_AddToPhysicsSystem";
+    RemoveFromPhysicsSystem :: (character : *Character, lockBodies : bool) -> void #foreign JoltC "JPH_Character_RemoveFromPhysicsSystem";
+    Activate :: (character : *Character, lockBodies : bool) -> void #foreign JoltC "JPH_Character_Activate";
+    PostSimulation :: (character : *Character, maxSeparationDistance : float, lockBodies : bool) -> void #foreign JoltC "JPH_Character_PostSimulation";
+    SetLinearAndAngularVelocity :: (character : *Character, linearVelocity : Vec3, angularVelocity : Vec3, lockBodies : bool) -> void #foreign JoltC "JPH_Character_SetLinearAndAngularVelocity";
+    GetLinearVelocity :: (character : *Character, lockBodies : bool) -> Vec3 #foreign JoltC "JPH_Character_GetLinearVelocity";
+    SetLinearVelocity :: (character : *Character, linearVelocity : Vec3, lockBodies : bool) -> void #foreign JoltC "JPH_Character_SetLinearVelocity";
+    AddLinearVelocity :: (character : *Character, linearVelocity : Vec3, lockBodies : bool) -> void #foreign JoltC "JPH_Character_AddLinearVelocity";
+    AddImpulse :: (character : *Character, impulse : Vec3, lockBodies : bool) -> void #foreign JoltC "JPH_Character_AddImpulse";
+    GetBodyID :: (character : *Character) -> BodyID #foreign JoltC "JPH_Character_GetBodyID";
+    GetPositionAndRotation :: (character : *Character, outPosition : *RVec3, outRotation : *Quat, lockBodies : bool) -> void #foreign JoltC "JPH_Character_GetPositionAndRotation";
+    SetPositionAndRotation :: (character : *Character, position : RVec3, rotation : Quat, activationMode : EActivation, lockBodies : bool) -> void #foreign JoltC "JPH_Character_SetPositionAndRotation";
+    GetPosition :: (character : *Character, lockBodies : bool) -> RVec3 #foreign JoltC "JPH_Character_GetPosition";
+    SetPosition :: (character : *Character, position : RVec3, activationMode : EActivation, lockBodies : bool) -> void #foreign JoltC "JPH_Character_SetPosition";
+    GetRotation :: (character : *Character, lockBodies : bool) -> Quat #foreign JoltC "JPH_Character_GetRotation";
+    SetRotation :: (character : *Character, rotation : Quat, activationMode : EActivation, lockBodies : bool) -> void #foreign JoltC "JPH_Character_SetRotation";
+    GetCenterOfMassPosition :: (character : *Character, lockBodies : bool) -> RVec3 #foreign JoltC "JPH_Character_GetCenterOfMassPosition";
+    GetWorldTransform :: (character : *Character, lockBodies : bool) -> RMat44 #foreign JoltC "JPH_Character_GetWorldTransform";
+    GetLayer :: (character : *Character) -> ObjectLayer #foreign JoltC "JPH_Character_GetLayer";
+    SetLayer :: (character : *Character, layer : ObjectLayer, lockBodies : bool) -> void #foreign JoltC "JPH_Character_SetLayer";
+    SetShape :: (character : *Character, shape : *Shape, maxPenetrationDepth : float, lockBodies : bool) -> bool #foreign JoltC "JPH_Character_SetShape";
+    GetTransformedShape :: (character : *Character, lockBodies : bool) -> TransformedShape #foreign JoltC "JPH_Character_GetTransformedShape";
+    CheckCollision :: (character : *Character, position : RVec3, rotation : Quat, movementDirection : Vec3, maxSeparationDistance : float, shape : *Shape, baseOffset : RVec3, collector : *CollideShapeCollector, lockBodies : bool) -> void #foreign JoltC "JPH_Character_CheckCollision";
+    GetCharacterSettings :: (character : *Character, lockBodies : bool) -> CharacterSettings #foreign JoltC "JPH_Character_GetCharacterSettings";
+}
+
+CharacterVirtual :: struct {
+    ExtendedUpdateSettings :: struct {
+        stickToFloorStepDown : Vec3;
+        walkStairsStepUp : Vec3;
+        walkStairsMinStepForward : float;
+        walkStairsStepForwardTest : float;
+        walkStairsCosAngleForwardContact : float;
+        walkStairsStepDownExtra : Vec3;
+    }
+
+    #as using,except(base) base : CharacterBase;
+
+    Create :: (settings : *CharacterVirtualSettings, position : RVec3, rotation : Quat, userData : u64, system : *PhysicsSystem) -> *CharacterVirtual #foreign JoltC "JPH_CharacterVirtual_Create";
+
+    GetID :: (character : *CharacterVirtual) -> CharacterID #foreign JoltC "JPH_CharacterVirtual_GetID";
+    SetListener :: (character : *CharacterVirtual, listener : *CharacterContactListener) -> void #foreign JoltC "JPH_CharacterVirtual_SetListener";
+    GetListener :: (character : *CharacterVirtual) -> *CharacterContactListener #foreign JoltC "JPH_CharacterVirtual_GetListener";
+    GetLinearVelocity :: (character : *CharacterVirtual) -> Vec3 #foreign JoltC "JPH_CharacterVirtual_GetLinearVelocity";
+    SetLinearVelocity :: (character : *CharacterVirtual, linearVelocity : Vec3) -> void #foreign JoltC "JPH_CharacterVirtual_SetLinearVelocity";
+    GetPosition :: (character : *CharacterVirtual) -> RVec3 #foreign JoltC "JPH_CharacterVirtual_GetPosition";
+    SetPosition :: (character : *CharacterVirtual, position : RVec3) -> void #foreign JoltC "JPH_CharacterVirtual_SetPosition";
+    GetRotation :: (character : *CharacterVirtual) -> Quat #foreign JoltC "JPH_CharacterVirtual_GetRotation";
+    SetRotation :: (character : *CharacterVirtual, rotation : Quat) -> void #foreign JoltC "JPH_CharacterVirtual_SetRotation";
+    GetCenterOfMassPosition :: (character : *CharacterVirtual) -> RVec3 #foreign JoltC "JPH_CharacterVirtual_GetCenterOfMassPosition";
+    GetWorldTransform :: (character : *CharacterVirtual) -> RMat44 #foreign JoltC "JPH_CharacterVirtual_GetWorldTransform";
+    GetCenterOfMassTransform :: (character : *CharacterVirtual) -> RMat44 #foreign JoltC "JPH_CharacterVirtual_GetCenterOfMassTransform";
+    GetMass :: (character : *CharacterVirtual) -> float #foreign JoltC "JPH_CharacterVirtual_GetMass";
+    SetMass :: (character : *CharacterVirtual, mass : float) -> void #foreign JoltC "JPH_CharacterVirtual_SetMass";
+    GetMaxStrength :: (character : *CharacterVirtual) -> float #foreign JoltC "JPH_CharacterVirtual_GetMaxStrength";
+    SetMaxStrength :: (character : *CharacterVirtual, maxStrength : float) -> void #foreign JoltC "JPH_CharacterVirtual_SetMaxStrength";
+    GetPenetrationRecoverySpeed :: (character : *CharacterVirtual) -> float #foreign JoltC "JPH_CharacterVirtual_GetPenetrationRecoverySpeed";
+    SetPenetrationRecoverySpeed :: (character : *CharacterVirtual, speed : float) -> void #foreign JoltC "JPH_CharacterVirtual_SetPenetrationRecoverySpeed";
+    GetEnhancedInternalEdgeRemoval :: (character : *CharacterVirtual) -> bool #foreign JoltC "JPH_CharacterVirtual_GetEnhancedInternalEdgeRemoval";
+    SetEnhancedInternalEdgeRemoval :: (character : *CharacterVirtual, apply : bool) -> void #foreign JoltC "JPH_CharacterVirtual_SetEnhancedInternalEdgeRemoval";
+    GetCharacterPadding :: (character : *CharacterVirtual) -> float #foreign JoltC "JPH_CharacterVirtual_GetCharacterPadding";
+    GetMaxNumHits :: (character : *CharacterVirtual) -> u32 #foreign JoltC "JPH_CharacterVirtual_GetMaxNumHits";
+    SetMaxNumHits :: (character : *CharacterVirtual, maxHits : u32) -> void #foreign JoltC "JPH_CharacterVirtual_SetMaxNumHits";
+    GetHitReductionCosMaxAngle :: (character : *CharacterVirtual) -> float #foreign JoltC "JPH_CharacterVirtual_GetHitReductionCosMaxAngle";
+    SetHitReductionCosMaxAngle :: (character : *CharacterVirtual, cosMaxAngle : float) -> void #foreign JoltC "JPH_CharacterVirtual_SetHitReductionCosMaxAngle";
+    GetMaxHitsExceeded :: (character : *CharacterVirtual) -> bool #foreign JoltC "JPH_CharacterVirtual_GetMaxHitsExceeded";
+    GetShapeOffset :: (character : *CharacterVirtual) -> Vec3 #foreign JoltC "JPH_CharacterVirtual_GetShapeOffset";
+    SetShapeOffset :: (character : *CharacterVirtual, shapeOffset : Vec3) -> void #foreign JoltC "JPH_CharacterVirtual_SetShapeOffset";
+    GetUserData :: (character : *CharacterVirtual) -> u64 #foreign JoltC "JPH_CharacterVirtual_GetUserData";
+    SetUserData :: (character : *CharacterVirtual, userData : u64) -> void #foreign JoltC "JPH_CharacterVirtual_SetUserData";
+    GetInnerBodyID :: (character : *CharacterVirtual) -> BodyID #foreign JoltC "JPH_CharacterVirtual_GetInnerBodyID";
+    CancelVelocityTowardsSteepSlopes :: (character : *CharacterVirtual, desiredVelocity : Vec3) -> Vec3 #foreign JoltC "JPH_CharacterVirtual_CancelVelocityTowardsSteepSlopes";
+    StartTrackingContactChanges :: (character : *CharacterVirtual) -> void #foreign JoltC "JPH_CharacterVirtual_StartTrackingContactChanges";
+    FinishTrackingContactChanges :: (character : *CharacterVirtual) -> void #foreign JoltC "JPH_CharacterVirtual_FinishTrackingContactChanges";
+    Update :: (character : *CharacterVirtual, deltaTime : float, gravity : Vec3, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter, allocator : *TempAllocator) -> void #foreign JoltC "JPH_CharacterVirtual_Update";
+    CanWalkStairs :: (character : *CharacterVirtual, linearVelocity : Vec3) -> bool #foreign JoltC "JPH_CharacterVirtual_CanWalkStairs";
+    WalkStairs :: (character : *CharacterVirtual, deltaTime : float, stepUp : Vec3, stepForward : Vec3, stepForwardTest : Vec3, stepDownExtra : Vec3, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter, allocator : *TempAllocator) -> bool #foreign JoltC "JPH_CharacterVirtual_WalkStairs";
+    StickToFloor :: (character : *CharacterVirtual, stepDown : Vec3, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter, allocator : *TempAllocator) -> bool #foreign JoltC "JPH_CharacterVirtual_StickToFloor";
+    ExtendedUpdate :: (character : *CharacterVirtual, deltaTime : float, gravity : Vec3, settings : *CharacterVirtual.ExtendedUpdateSettings, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter, allocator : *TempAllocator) -> void #foreign JoltC "JPH_CharacterVirtual_ExtendedUpdate";
+    RefreshContacts :: (character : *CharacterVirtual, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter, allocator : *TempAllocator) -> void #foreign JoltC "JPH_CharacterVirtual_RefreshContacts";
+    UpdateGroundVelocity :: (character : *CharacterVirtual) -> void #foreign JoltC "JPH_CharacterVirtual_UpdateGroundVelocity";
+    SetShape :: (character : *CharacterVirtual, shape : *Shape, maxPenetrationDepth : float, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter, allocator : *TempAllocator) -> bool #foreign JoltC "JPH_CharacterVirtual_SetShape";
+    SetInnerBodyShape :: (character : *CharacterVirtual, shape : *Shape) -> void #foreign JoltC "JPH_CharacterVirtual_SetInnerBodyShape";
+    GetTransformedShape :: (character : *CharacterVirtual) -> TransformedShape #foreign JoltC "JPH_CharacterVirtual_GetTransformedShape";
+    CheckCollision :: (character : *CharacterVirtual, position : RVec3, rotation : Quat, movementDirection : Vec3, maxSeparationDistance : float, shape : *Shape, baseOffset : RVec3, ioCollector : *CollideShapeCollector, broadPhaseLayerFilter : *BroadPhaseLayerFilter, objectLayerFilter : *ObjectLayerFilter, bodyFilter : *BodyFilter, shapeFilter : *ShapeFilter) -> void #foreign JoltC "JPH_CharacterVirtual_CheckCollision";
+    GetCharacterVirtualSettings :: (character : *CharacterVirtual) -> CharacterVirtualSettings #foreign JoltC "JPH_CharacterVirtual_GetCharacterVirtualSettings";
+    HasCollidedWithBody :: (character : *CharacterVirtual, body : BodyID) -> bool #foreign JoltC "JPH_CharacterVirtual_HasCollidedWithBody";
+    HasCollidedWithCharacterByID :: (character : *CharacterVirtual, characterID : CharacterID) -> bool #foreign JoltC "JPH_CharacterVirtual_HasCollidedWithCharacterByID";
+    HasCollidedWithCharacter :: (character : *CharacterVirtual, otherCharacter : *CharacterVirtual) -> bool #foreign JoltC "JPH_CharacterVirtual_HasCollidedWithCharacter";
+}
+
+CharacterVirtualSettings :: struct {
+    up : Vec3;
+    supportingVolume : Plane;
+    maxSlopeAngle : float;
+    enhancedInternalEdgeRemoval : bool;
+    shape : *Shape;
+    id : CharacterID;
+    mass : float;
+    maxStrength : float;
+    shapeOffset : Vec3;
+    backFaceMode : EBackFaceMode;
+    predictiveContactDistance : float;
+    maxCollisionIterations : u32;
+    maxConstraintIterations : u32;
+    minTimeRemaining : float;
+    collisionTolerance : float;
+    characterPadding : float;
+    maxNumHits : u32;
+    hitReductionCosMaxAngle : float;
+    penetrationRecoverySpeed : float;
+    innerBodyShape : *Shape;
+    innerBodyIDOverride : BodyID;
+    innerBodyLayer : ObjectLayer;
+}
+
+CharacterContact :: struct {
+    bodyB : BodyID;
+    characterIDB : CharacterID;
+    subShapeIDB : SubShapeID;
+    position : RVec3;
+    linearVelocity : Vec3;
+    contactNormal : Vec3;
+    surfaceNormal : Vec3;
+    distance : float;
+    fraction : float;
+    motionTypeB : EMotionType;
+    isSensorB : bool;
+    characterB : *CharacterVirtual;
+    userData : u64;
+    material : *PhysicsMaterial;
+    hadCollision : bool;
+    wasDiscarded : bool;
+    canPushCharacter : bool;
+    isBackFacingContact : bool;
+}
+
+CharacterContactSettings :: struct {
+    canPushCharacter : bool;
+    canReceiveImpulses : bool;
+}
+
+CharacterContactListener :: struct {
+    Funcs :: struct {
+        Destruct : #type (*void) -> void #c_call;
+        OnAdjustBodyVelocity : #type (*void, *CharacterVirtual, *Body, *Vec3, *Vec3) -> void #c_call;
+        OnContactValidate : #type (*void, *CharacterVirtual, *CharacterContact) -> bool #c_call;
+        OnContactAdded : #type (*void, *CharacterVirtual, *CharacterContact, *CharacterContactSettings) -> void #c_call;
+        OnContactPersisted : #type (*void, *CharacterVirtual, *CharacterContact, *CharacterContactSettings) -> void #c_call;
+        OnContactRemoved : #type (*void, *CharacterVirtual, BodyID, SubShapeID) -> void #c_call;
+        OnCharacterContactValidate : #type (*void, *CharacterVirtual, *CharacterContact) -> bool #c_call;
+        OnCharacterContactAdded : #type (*void, *CharacterVirtual, *CharacterContact, *CharacterContactSettings) -> void #c_call;
+        OnCharacterContactPersisted : #type (*void, *CharacterVirtual, *CharacterContact, *CharacterContactSettings) -> void #c_call;
+        OnCharacterContactRemoved : #type (*void, *CharacterVirtual, CharacterID, SubShapeID) -> void #c_call;
+        OnContactSolve : #type (*void, *CharacterVirtual, BodyID, SubShapeID, RVec3, Vec3, Vec3, *PhysicsMaterial, Vec3, *Vec3) -> void #c_call;
+        OnCharacterContactSolve : #type (*void, *CharacterVirtual, *CharacterVirtual, SubShapeID, RVec3, Vec3, Vec3, *PhysicsMaterial, Vec3, *Vec3) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CharacterContactListener.Funcs, allocator : JoltCAllocator) -> *CharacterContactListener #foreign JoltC "JPH_CharacterContactListener_Create";
+
+    Destroy :: (self : *CharacterContactListener) -> void #foreign JoltC "JPH_CharacterContactListener_Destroy";
 }
 
 // Functions
