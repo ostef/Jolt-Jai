@@ -169,22 +169,12 @@ GenerateBindings :: (options : JoltCompileOptions) -> bool {
         if options & .EnableObjectStream {
             array_add(*bindgen, "-D", "JOLTC_OBJECT_STREAM");
         }
+        array_add(*bindgen, "-o", tprint("%/jolt.jai", working_dir));
 
-        bindgen_status, bindgen_result, bindgen_error := run_command(..bindgen, capture_and_return_output=true);
-        if bindgen_status.exit_code != 0 {
-            log_error("joltc-bindgen failed:\n%", bindgen_error);
+        if run_command(..bindgen).exit_code != 0 {
             return false;
         }
-
-        if (bindgen_error != "") {
-            log("%", bindgen_error);
-        }
-
-        result = bindgen_result;
     }
-
-    result = sprint("COMBINED_SHARED_LIBS :: %1;\n\n%2", (options & .CombinedSharedLibs) != 0, result);
-    write_entire_file("jolt.jai", result);
 
     return true;
 }

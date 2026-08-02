@@ -1,5 +1,3 @@
-COMBINED_SHARED_LIBS :: true;
-
 // Defines
 
 PROFILE_ENABLED :: 1;
