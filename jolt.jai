@@ -174,7 +174,7 @@ EAllowedDOFs :: enum_flags u8 {
     RotationX :: 8;
     RotationY :: 16;
     RotationZ :: 32;
-    Plane2D :: 7;
+    Plane2D :: 35;
 }
 
 EOverrideMassProperties :: enum u8 {
@@ -383,7 +383,17 @@ JoltCAllocator :: struct {
     Free :: (allocator : JoltCAllocator, ptr : *void) -> void #foreign JoltC "JPH_JoltCAllocator_Free";
 }
 
-PhysicsMaterial :: struct {}
+PhysicsMaterial :: struct {
+    Funcs :: struct {
+        Destruct : #type (*void) -> void #c_call;
+        GetDebugName : #type (*void) -> *s8 #c_call;
+        GetDebugColor : #type (*void) -> Color #c_call;
+    }
+
+    Create :: (data : *void, funcs : PhysicsMaterial.Funcs, allocator : JoltCAllocator) -> *PhysicsMaterial #foreign JoltC "JPH_PhysicsMaterial_Create";
+
+    Destroy :: (self : *PhysicsMaterial) -> void #foreign JoltC "JPH_PhysicsMaterial_Destroy";
+}
 
 Shape :: struct {
     SupportingFace :: struct {
@@ -439,14 +449,20 @@ EmptyShapeSettings :: struct {
     #as using,except(base) base : ShapeSettings;
     centerOfMass : Vec3;
 
+    Default :: () -> EmptyShapeSettings #foreign JoltC "JPH_EmptyShapeSettings_Default";
+
     CreateShape :: (settings : *EmptyShapeSettings) -> *Shape #foreign JoltC "JPH_EmptyShapeSettings_CreateShape";
 }
 
 PlaneShapeSettings :: struct {
+    cDefaultHalfExtent :: 1000.0;
+
     #as using,except(base) base : ShapeSettings;
     plane : Plane;
     material : *PhysicsMaterial;
     halfExtent : float;
+
+    Default :: () -> PlaneShapeSettings #foreign JoltC "JPH_PlaneShapeSettings_Default";
 
     CreateShape :: (settings : *PlaneShapeSettings) -> *Shape #foreign JoltC "JPH_PlaneShapeSettings_CreateShape";
 }
@@ -479,6 +495,8 @@ MeshShapeSettings :: struct {
     perTriangleUserData : bool;
     buildQuality : MeshShapeSettings.EBuildQuality;
 
+    Default :: () -> MeshShapeSettings #foreign JoltC "JPH_MeshShapeSettings_Default";
+
     CreateShape :: (settings : *MeshShapeSettings) -> *Shape #foreign JoltC "JPH_MeshShapeSettings_CreateShape";
 }
 
@@ -504,11 +522,14 @@ HeightFieldShapeSettings :: struct {
     materials : **PhysicsMaterial;
     activeEdgeCosThresholdAngle : float;
 
+    Default :: () -> HeightFieldShapeSettings #foreign JoltC "JPH_HeightFieldShapeSettings_Default";
+
     CreateShape :: (settings : *HeightFieldShapeSettings) -> *Shape #foreign JoltC "JPH_HeightFieldShapeSettings_CreateShape";
 }
 
 ConvexShapeSettings :: struct {
     cDefaultDensity :: 1000.0;
+    cDefaultConvexRadius :: 0.05;
 
     #as using,except(base) base : ShapeSettings;
     material : *PhysicsMaterial;
@@ -519,6 +540,8 @@ SphereShapeSettings :: struct {
     #as using,except(base) base : ConvexShapeSettings;
     radius : float;
 
+    Default :: () -> SphereShapeSettings #foreign JoltC "JPH_SphereShapeSettings_Default";
+
     CreateShape :: (settings : *SphereShapeSettings) -> *Shape #foreign JoltC "JPH_SphereShapeSettings_CreateShape";
 }
 
@@ -526,6 +549,8 @@ BoxShapeSettings :: struct {
     #as using,except(base) base : ConvexShapeSettings;
     halfExtent : Vec3;
     convexRadius : float;
+
+    Default :: () -> BoxShapeSettings #foreign JoltC "JPH_BoxShapeSettings_Default";
 
     CreateShape :: (settings : *BoxShapeSettings) -> *Shape #foreign JoltC "JPH_BoxShapeSettings_CreateShape";
 }
@@ -537,6 +562,8 @@ TriangleShapeSettings :: struct {
     v3 : Vec3;
     convexRadius : float;
 
+    Default :: () -> TriangleShapeSettings #foreign JoltC "JPH_TriangleShapeSettings_Default";
+
     CreateShape :: (settings : *TriangleShapeSettings) -> *Shape #foreign JoltC "JPH_TriangleShapeSettings_CreateShape";
 }
 
@@ -544,6 +571,8 @@ CapsuleShapeSettings :: struct {
     #as using,except(base) base : ConvexShapeSettings;
     radius : float;
     halfHeightOfCylinder : float;
+
+    Default :: () -> CapsuleShapeSettings #foreign JoltC "JPH_CapsuleShapeSettings_Default";
 
     CreateShape :: (settings : *CapsuleShapeSettings) -> *Shape #foreign JoltC "JPH_CapsuleShapeSettings_CreateShape";
     IsValid :: (settings : *CapsuleShapeSettings) -> bool #foreign JoltC "JPH_CapsuleShapeSettings_IsValid";
@@ -556,6 +585,8 @@ TaperedCapsuleShapeSettings :: struct {
     topRadius : float;
     bottomRadius : float;
 
+    Default :: () -> TaperedCapsuleShapeSettings #foreign JoltC "JPH_TaperedCapsuleShapeSettings_Default";
+
     CreateShape :: (settings : *TaperedCapsuleShapeSettings) -> *Shape #foreign JoltC "JPH_TaperedCapsuleShapeSettings_CreateShape";
     IsValid :: (settings : *TaperedCapsuleShapeSettings) -> bool #foreign JoltC "JPH_TaperedCapsuleShapeSettings_IsValid";
     IsSphere :: (settings : *TaperedCapsuleShapeSettings) -> bool #foreign JoltC "JPH_TaperedCapsuleShapeSettings_IsSphere";
@@ -567,6 +598,8 @@ CylinderShapeSettings :: struct {
     radius : float;
     convexRadius : float;
 
+    Default :: () -> CylinderShapeSettings #foreign JoltC "JPH_CylinderShapeSettings_Default";
+
     CreateShape :: (settings : *CylinderShapeSettings) -> *Shape #foreign JoltC "JPH_CylinderShapeSettings_CreateShape";
 }
 
@@ -576,6 +609,8 @@ TaperedCylinderShapeSettings :: struct {
     topRadius : float;
     bottomRadius : float;
     convexRadius : float;
+
+    Default :: () -> TaperedCylinderShapeSettings #foreign JoltC "JPH_TaperedCylinderShapeSettings_Default";
 
     CreateShape :: (settings : *TaperedCylinderShapeSettings) -> *Shape #foreign JoltC "JPH_TaperedCylinderShapeSettings_CreateShape";
 }
@@ -590,6 +625,8 @@ ConvexHullShapeSettings :: struct {
     maxConvexRadius : float;
     maxErrorConvexRadius : float;
     hullTolerance : float;
+
+    Default :: () -> ConvexHullShapeSettings #foreign JoltC "JPH_ConvexHullShapeSettings_Default";
 
     CreateShape :: (settings : *ConvexHullShapeSettings) -> *Shape #foreign JoltC "JPH_ConvexHullShapeSettings_CreateShape";
 }
@@ -610,11 +647,15 @@ CompoundShapeSettings :: struct {
 StaticCompoundShapeSettings :: struct {
     #as using,except(base) base : CompoundShapeSettings;
 
+    Default :: () -> StaticCompoundShapeSettings #foreign JoltC "JPH_StaticCompoundShapeSettings_Default";
+
     CreateShape :: (settings : *StaticCompoundShapeSettings) -> *Shape #foreign JoltC "JPH_StaticCompoundShapeSettings_CreateShape";
 }
 
 MutableCompoundShapeSettings :: struct {
     #as using,except(base) base : CompoundShapeSettings;
+
+    Default :: () -> MutableCompoundShapeSettings #foreign JoltC "JPH_MutableCompoundShapeSettings_Default";
 
     CreateShape :: (settings : *MutableCompoundShapeSettings) -> *Shape #foreign JoltC "JPH_MutableCompoundShapeSettings_CreateShape";
 }
@@ -629,6 +670,8 @@ RotatedTranslatedShapeSettings :: struct {
     position : Vec3;
     rotation : Quat;
 
+    Default :: () -> RotatedTranslatedShapeSettings #foreign JoltC "JPH_RotatedTranslatedShapeSettings_Default";
+
     CreateShape :: (settings : *RotatedTranslatedShapeSettings) -> *Shape #foreign JoltC "JPH_RotatedTranslatedShapeSettings_CreateShape";
 }
 
@@ -636,12 +679,16 @@ ScaledShapeSettings :: struct {
     #as using,except(base) base : DecoratedShapeSettings;
     scale : Vec3;
 
+    Default :: () -> ScaledShapeSettings #foreign JoltC "JPH_ScaledShapeSettings_Default";
+
     CreateShape :: (settings : *ScaledShapeSettings) -> *Shape #foreign JoltC "JPH_ScaledShapeSettings_CreateShape";
 }
 
 OffsetCenterOfMassShapeSettings :: struct {
     #as using,except(base) base : DecoratedShapeSettings;
     offset : Vec3;
+
+    Default :: () -> OffsetCenterOfMassShapeSettings #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_Default";
 
     CreateShape :: (settings : *OffsetCenterOfMassShapeSettings) -> *Shape #foreign JoltC "JPH_OffsetCenterOfMassShapeSettings_CreateShape";
 }
@@ -839,6 +886,8 @@ TransformedShape :: struct {
 }
 
 Body :: struct {
+    FixedToWorld :: () -> *Body #foreign JoltC "JPH_Body_FixedToWorld";
+
     GetID :: (body : *Body) -> BodyID #foreign JoltC "JPH_Body_GetID";
     GetBodyType :: (body : *Body) -> EBodyType #foreign JoltC "JPH_Body_GetBodyType";
     IsRigidBody :: (body : *Body) -> bool #foreign JoltC "JPH_Body_IsRigidBody";
@@ -1102,6 +1151,19 @@ ReversedShapeFilter :: struct {
     Create :: (other : *ShapeFilter, allocator : JoltCAllocator) -> *ReversedShapeFilter #foreign JoltC "JPH_ReversedShapeFilter_Create";
 }
 
+SimShapeFilter :: struct {
+    Funcs :: struct {
+        Destruct : #type (*void) -> void #c_call;
+        ShouldCollide : #type (*void, *Body, *Shape, SubShapeID, *Body, *Shape, SubShapeID) -> bool #c_call;
+    }
+
+    opaque : s8;
+
+    Create :: (data : *void, funcs : SimShapeFilter.Funcs, allocator : JoltCAllocator) -> *SimShapeFilter #foreign JoltC "JPH_SimShapeFilter_Create";
+
+    Destroy :: (self : *SimShapeFilter) -> void #foreign JoltC "JPH_SimShapeFilter_Destroy";
+}
+
 BroadPhaseQuery :: struct {
     CastRayHitCallback :: #type (*void, *BroadPhaseCastResult) -> void #c_call;
     CastRayCollectCallback :: #type (*void, *BroadPhaseCastResult) -> float #c_call;
@@ -1157,6 +1219,8 @@ RayCast :: struct {
     origin : Vec3;
     direction : Vec3;
 
+    Make :: (origin : Vec3, direction : Vec3, length : float) -> RayCast #foreign JoltC "JPH_RayCast_Make";
+
     Transformed :: (ray : *RayCast, transform : Mat44) -> RayCast #foreign JoltC "JPH_RayCast_Transformed";
     Translated :: (ray : *RayCast, translation : Vec3) -> RayCast #foreign JoltC "JPH_RayCast_Translated";
     GetPointOnRay :: (ray : *RayCast, fraction : float) -> Vec3 #foreign JoltC "JPH_RayCast_GetPointOnRay";
@@ -1165,6 +1229,8 @@ RayCast :: struct {
 RRayCast :: struct {
     origin : RVec3;
     direction : Vec3;
+
+    Make :: (origin : RVec3, direction : Vec3, length : float) -> RRayCast #foreign JoltC "JPH_RRayCast_Make";
 
     Transformed :: (ray : *RRayCast, transform : RMat44) -> RRayCast #foreign JoltC "JPH_RRayCast_Transformed";
     Translated :: (ray : *RRayCast, translation : RVec3) -> RRayCast #foreign JoltC "JPH_RRayCast_Translated";
@@ -1233,14 +1299,6 @@ ShapeCastResult :: struct {
     isBackFaceHit : bool;
 }
 
-CollideSettingsBase :: struct {
-    activeEdgeMode : EActiveEdgeMode;
-    collectFacesMode : ECollectFacesMode;
-    collisionTolerance : float;
-    penetrationTolerance : float;
-    activeEdgeMovementDirection : Vec3;
-}
-
 ShapeCastSettings :: struct {
     activeEdgeMode : EActiveEdgeMode;
     collectFacesMode : ECollectFacesMode;
@@ -1252,6 +1310,8 @@ ShapeCastSettings :: struct {
     backFaceModeConvex : EBackFaceMode;
     useShrunkenShapeAndConvexRadius : bool;
     returnDeepestPoint : bool;
+
+    Default :: () -> ShapeCastSettings #foreign JoltC "JPH_ShapeCastSettings_Default";
 }
 
 CollideShapeSettings :: struct {
@@ -1263,6 +1323,8 @@ CollideShapeSettings :: struct {
     maxSeparationDistance : float;
     backFaceMode : EBackFaceMode;
     internalEdgeRemovalVertexToleranceSq : float;
+
+    Default :: () -> CollideShapeSettings #foreign JoltC "JPH_CollideShapeSettings_Default";
 }
 
 RShapeCast :: struct {
@@ -1403,6 +1465,7 @@ BodyInterface :: struct {
     IsAdded :: (bodyInterface : *BodyInterface, bodyID : BodyID) -> bool #foreign JoltC "JPH_BodyInterface_IsAdded";
     CreateAndAddBody :: (bodyInterface : *BodyInterface, settings : *BodyCreationSettings, activationMode : EActivation) -> BodyID #foreign JoltC "JPH_BodyInterface_CreateAndAddBody";
     CreateAndAddSoftBody :: (bodyInterface : *BodyInterface, settings : *SoftBodyCreationSettings, activationMode : EActivation) -> BodyID #foreign JoltC "JPH_BodyInterface_CreateAndAddSoftBody";
+    ActivateConstraint :: (bodyInterface : *BodyInterface, constraint : *TwoBodyConstraint) -> void #foreign JoltC "JPH_BodyInterface_ActivateConstraint";
     MoveKinematic :: (bodyInterface : *BodyInterface, bodyID : BodyID, targetPosition : RVec3, targetRotation : Quat, deltaTime : float) -> void #foreign JoltC "JPH_BodyInterface_MoveKinematic";
     SetLinearAndAngularVelocity :: (bodyInterface : *BodyInterface, bodyID : BodyID, linearVelocity : Vec3, angularVelocity : Vec3) -> void #foreign JoltC "JPH_BodyInterface_SetLinearAndAngularVelocity";
     GetLinearAndAngularVelocity :: (bodyInterface : *BodyInterface, bodyID : BodyID, outLinearVelocity : *Vec3, outAngularVelocity : *Vec3) -> void #foreign JoltC "JPH_BodyInterface_GetLinearAndAngularVelocity";
@@ -1497,8 +1560,6 @@ MotionProperties :: struct {}
 
 SoftBodyMotionProperties :: struct {}
 
-SoftBodySharedSettings :: struct {}
-
 BodyManager :: struct {
     MutexMask :: u64;
 
@@ -1590,6 +1651,8 @@ BodyCreationSettings :: struct {
     HasMassProperties :: (settings : *BodyCreationSettings) -> bool #foreign JoltC "JPH_BodyCreationSettings_HasMassProperties";
     GetMassProperties :: (settings : *BodyCreationSettings) -> MassProperties #foreign JoltC "JPH_BodyCreationSettings_GetMassProperties";
 }
+
+SoftBodySharedSettings :: struct {}
 
 SoftBodyCreationSettings :: struct {
     settings : *SoftBodySharedSettings;
@@ -1718,6 +1781,8 @@ PhysicsSystem :: struct {
     GetObjectLayerPairFilter :: (system : *PhysicsSystem) -> *ObjectLayerPairFilter #foreign JoltC "JPH_PhysicsSystem_GetObjectLayerPairFilter";
     GetDefaultBroadPhaseLayerFilter :: (system : *PhysicsSystem, layer : ObjectLayer) -> DefaultBroadPhaseLayerFilter #foreign JoltC "JPH_PhysicsSystem_GetDefaultBroadPhaseLayerFilter";
     GetDefaultLayerFilter :: (system : *PhysicsSystem, layer : ObjectLayer) -> DefaultObjectLayerFilter #foreign JoltC "JPH_PhysicsSystem_GetDefaultLayerFilter";
+    SetSimShapeFilter :: (system : *PhysicsSystem, shapeFilter : *SimShapeFilter) -> void #foreign JoltC "JPH_PhysicsSystem_SetSimShapeFilter";
+    GetSimShapeFilter :: (system : *PhysicsSystem) -> *SimShapeFilter #foreign JoltC "JPH_PhysicsSystem_GetSimShapeFilter";
     AddConstraint :: (system : *PhysicsSystem, constraint : *Constraint) -> void #foreign JoltC "JPH_PhysicsSystem_AddConstraint";
     RemoveConstraint :: (system : *PhysicsSystem, constraint : *Constraint) -> void #foreign JoltC "JPH_PhysicsSystem_RemoveConstraint";
     AddConstraints :: (system : *PhysicsSystem, constraints : **Constraint, numConstraints : s32) -> void #foreign JoltC "JPH_PhysicsSystem_AddConstraints";
@@ -1767,6 +1832,9 @@ SpringSettings :: struct {
         stiffness : float;
     }
     damping : float;
+
+    Default :: () -> SpringSettings #foreign JoltC "JPH_SpringSettings_Default";
+    Make :: (mode : ESpringMode, frequencyOrStiffness : float, damping : float) -> SpringSettings #foreign JoltC "JPH_SpringSettings_Make";
 }
 
 MotorSettings :: struct {
@@ -1775,6 +1843,8 @@ MotorSettings :: struct {
     maxForceLimit : float;
     minTorqueLimit : float;
     maxTorqueLimit : float;
+
+    Default :: () -> MotorSettings #foreign JoltC "JPH_MotorSettings_Default";
 }
 
 ConstraintSettings :: struct {
@@ -1799,6 +1869,8 @@ ConeConstraintSettings :: struct {
     twistAxis2 : Vec3;
     halfConeAngle : float;
 
+    Default :: () -> ConeConstraintSettings #foreign JoltC "JPH_ConeConstraintSettings_Default";
+
     CreateConstraint :: (settings : *ConeConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_ConeConstraintSettings_CreateConstraint";
 }
 
@@ -1810,6 +1882,8 @@ DistanceConstraintSettings :: struct {
     minDistance : float;
     maxDistance : float;
     limitsSpringSettings : SpringSettings;
+
+    Default :: () -> DistanceConstraintSettings #foreign JoltC "JPH_DistanceConstraintSettings_Default";
 
     CreateConstraint :: (settings : *DistanceConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_DistanceConstraintSettings_CreateConstraint";
 }
@@ -1825,6 +1899,8 @@ FixedConstraintSettings :: struct {
     axisX2 : Vec3;
     axisY2 : Vec3;
 
+    Default :: () -> FixedConstraintSettings #foreign JoltC "JPH_FixedConstraintSettings_Default";
+
     CreateConstraint :: (settings : *FixedConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_FixedConstraintSettings_CreateConstraint";
 }
 
@@ -1834,6 +1910,8 @@ GearConstraintSettings :: struct {
     hingeAxis1 : Vec3;
     hingeAxis2 : Vec3;
     ratio : float;
+
+    Default :: () -> GearConstraintSettings #foreign JoltC "JPH_GearConstraintSettings_Default";
 
     CreateConstraint :: (settings : *GearConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_GearConstraintSettings_CreateConstraint";
 }
@@ -1852,6 +1930,8 @@ HingeConstraintSettings :: struct {
     limitsSpringSettings : SpringSettings;
     maxFrictionTorque : float;
     motorSettings : MotorSettings;
+
+    Default :: () -> HingeConstraintSettings #foreign JoltC "JPH_HingeConstraintSettings_Default";
 
     CreateConstraint :: (settings : *HingeConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_HingeConstraintSettings_CreateConstraint";
 }
@@ -1886,6 +1966,8 @@ PathConstraintSettings :: struct {
     positionMotorSettings : MotorSettings;
     rotationConstraintType : EPathRotationConstraintType;
 
+    Default :: () -> PathConstraintSettings #foreign JoltC "JPH_PathConstraintSettings_Default";
+
     CreateConstraint :: (settings : *PathConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_PathConstraintSettings_CreateConstraint";
 }
 
@@ -1894,6 +1976,8 @@ PointConstraintSettings :: struct {
     space : EConstraintSpace;
     point1 : RVec3;
     point2 : RVec3;
+
+    Default :: () -> PointConstraintSettings #foreign JoltC "JPH_PointConstraintSettings_Default";
 
     CreateConstraint :: (settings : *PointConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_PointConstraintSettings_CreateConstraint";
 }
@@ -1909,6 +1993,8 @@ PulleyConstraintSettings :: struct {
     minLength : float;
     maxLength : float;
 
+    Default :: () -> PulleyConstraintSettings #foreign JoltC "JPH_PulleyConstraintSettings_Default";
+
     CreateConstraint :: (settings : *PulleyConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_PulleyConstraintSettings_CreateConstraint";
 }
 
@@ -1918,6 +2004,8 @@ RackAndPinionConstraintSettings :: struct {
     hingeAxis : Vec3;
     sliderAxis : Vec3;
     ratio : float;
+
+    Default :: () -> RackAndPinionConstraintSettings #foreign JoltC "JPH_RackAndPinionConstraintSettings_Default";
 
     CreateConstraint :: (settings : *RackAndPinionConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_RackAndPinionConstraintSettings_CreateConstraint";
 }
@@ -1949,6 +2037,8 @@ SixDOFConstraintSettings :: struct {
     limitsSpringSettings : [3]SpringSettings;
     motorSettings : [6]MotorSettings;
 
+    Default :: () -> SixDOFConstraintSettings #foreign JoltC "JPH_SixDOFConstraintSettings_Default";
+
     CreateConstraint :: (settings : *SixDOFConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_SixDOFConstraintSettings_CreateConstraint";
     MakeFreeAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis) -> void #foreign JoltC "JPH_SixDOFConstraintSettings_MakeFreeAxis";
     IsFreeAxis :: (settings : *SixDOFConstraintSettings, axis : SixDOFConstraintSettings.EAxis) -> bool #foreign JoltC "JPH_SixDOFConstraintSettings_IsFreeAxis";
@@ -1973,6 +2063,8 @@ SliderConstraintSettings :: struct {
     maxFrictionForce : float;
     motorSettings : MotorSettings;
 
+    Default :: () -> SliderConstraintSettings #foreign JoltC "JPH_SliderConstraintSettings_Default";
+
     CreateConstraint :: (settings : *SliderConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_SliderConstraintSettings_CreateConstraint";
 }
 
@@ -1993,6 +2085,8 @@ SwingTwistConstraintSettings :: struct {
     maxFrictionTorque : float;
     swingMotorSettings : MotorSettings;
     twistMotorSettings : MotorSettings;
+
+    Default :: () -> SwingTwistConstraintSettings #foreign JoltC "JPH_SwingTwistConstraintSettings_Default";
 
     CreateConstraint :: (settings : *SwingTwistConstraintSettings, body1 : *Body, body2 : *Body) -> *TwoBodyConstraint #foreign JoltC "JPH_SwingTwistConstraintSettings_CreateConstraint";
 }
@@ -2212,14 +2306,6 @@ SwingTwistConstraint :: struct {
     GetRotationInConstraintSpace :: (constraint : *SwingTwistConstraint) -> Quat #foreign JoltC "JPH_SwingTwistConstraint_GetRotationInConstraintSpace";
 }
 
-CharacterBaseSettings :: struct {
-    up : Vec3;
-    supportingVolume : Plane;
-    maxSlopeAngle : float;
-    enhancedInternalEdgeRemoval : bool;
-    shape : *Shape;
-}
-
 CharacterBase :: struct {
     opaque : s8;
 
@@ -2255,6 +2341,8 @@ CharacterSettings :: struct {
     friction : float;
     gravityFactor : float;
     allowedDOFs : EAllowedDOFs;
+
+    Default :: () -> CharacterSettings #foreign JoltC "JPH_CharacterSettings_Default";
 }
 
 Character :: struct {
@@ -2288,6 +2376,33 @@ Character :: struct {
     GetCharacterSettings :: (character : *Character, lockBodies : bool) -> CharacterSettings #foreign JoltC "JPH_Character_GetCharacterSettings";
 }
 
+CharacterVirtualSettings :: struct {
+    up : Vec3;
+    supportingVolume : Plane;
+    maxSlopeAngle : float;
+    enhancedInternalEdgeRemoval : bool;
+    shape : *Shape;
+    id : CharacterID;
+    mass : float;
+    maxStrength : float;
+    shapeOffset : Vec3;
+    backFaceMode : EBackFaceMode;
+    predictiveContactDistance : float;
+    maxCollisionIterations : u32;
+    maxConstraintIterations : u32;
+    minTimeRemaining : float;
+    collisionTolerance : float;
+    characterPadding : float;
+    maxNumHits : u32;
+    hitReductionCosMaxAngle : float;
+    penetrationRecoverySpeed : float;
+    innerBodyShape : *Shape;
+    innerBodyIDOverride : BodyID;
+    innerBodyLayer : ObjectLayer;
+
+    Default :: () -> CharacterVirtualSettings #foreign JoltC "JPH_CharacterVirtualSettings_Default";
+}
+
 CharacterVirtual :: struct {
     ExtendedUpdateSettings :: struct {
         stickToFloorStepDown : Vec3;
@@ -2296,6 +2411,8 @@ CharacterVirtual :: struct {
         walkStairsStepForwardTest : float;
         walkStairsCosAngleForwardContact : float;
         walkStairsStepDownExtra : Vec3;
+
+        Default :: () -> CharacterVirtual.ExtendedUpdateSettings #foreign JoltC "JPH_CharacterVirtual_ExtendedUpdateSettings_Default";
     }
 
     #as using,except(base) base : CharacterBase;
@@ -2353,31 +2470,6 @@ CharacterVirtual :: struct {
     HasCollidedWithCharacter :: (character : *CharacterVirtual, otherCharacter : *CharacterVirtual) -> bool #foreign JoltC "JPH_CharacterVirtual_HasCollidedWithCharacter";
 }
 
-CharacterVirtualSettings :: struct {
-    up : Vec3;
-    supportingVolume : Plane;
-    maxSlopeAngle : float;
-    enhancedInternalEdgeRemoval : bool;
-    shape : *Shape;
-    id : CharacterID;
-    mass : float;
-    maxStrength : float;
-    shapeOffset : Vec3;
-    backFaceMode : EBackFaceMode;
-    predictiveContactDistance : float;
-    maxCollisionIterations : u32;
-    maxConstraintIterations : u32;
-    minTimeRemaining : float;
-    collisionTolerance : float;
-    characterPadding : float;
-    maxNumHits : u32;
-    hitReductionCosMaxAngle : float;
-    penetrationRecoverySpeed : float;
-    innerBodyShape : *Shape;
-    innerBodyIDOverride : BodyID;
-    innerBodyLayer : ObjectLayer;
-}
-
 CharacterContact :: struct {
     bodyB : BodyID;
     characterIDB : CharacterID;
@@ -2402,6 +2494,8 @@ CharacterContact :: struct {
 CharacterContactSettings :: struct {
     canPushCharacter : bool;
     canReceiveImpulses : bool;
+
+    Default :: () -> CharacterContactSettings #foreign JoltC "JPH_CharacterContactSettings_Default";
 }
 
 CharacterContactListener :: struct {
@@ -2427,6 +2521,8 @@ CharacterContactListener :: struct {
 
 // Functions
 
+DegreesToRadians :: (degrees : float) -> float #foreign JoltC "JPH_DegreesToRadians";
+RadiansToDegrees :: (radians : float) -> float #foreign JoltC "JPH_RadiansToDegrees";
 RegisterDefaultAllocator :: () -> void #foreign JoltC "JPH_RegisterDefaultAllocator";
 RegisterDefaultTraceHandler :: () -> void #foreign JoltC "JPH_RegisterDefaultTraceHandler";
 RegisterDefaultAssertFailedHandler :: () -> void #foreign JoltC "JPH_RegisterDefaultAssertFailedHandler";
@@ -2443,3 +2539,4 @@ Free :: (block : *void) -> void #foreign JoltC "JPH_Free";
 AlignedAllocate :: (size : u64, alignment : u64) -> *void #foreign JoltC "JPH_AlignedAllocate";
 AlignedFree :: (block : *void) -> void #foreign JoltC "JPH_AlignedFree";
 GetJoltVersionID :: () -> u64 #foreign JoltC "JPH_GetJoltVersionID";
+NextCharacterID :: () -> CharacterID #foreign JoltC "JPH_NextCharacterID";
