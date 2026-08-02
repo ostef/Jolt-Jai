@@ -915,6 +915,7 @@ Body :: struct {
     GetUserData :: (body : *Body) -> u64 #foreign JoltC "JPH_Body_GetUserData";
     SetUserData :: (body : *Body, userData : u64) -> void #foreign JoltC "JPH_Body_SetUserData";
     GetWorldSpaceSurfaceNormal :: (body : *Body, subShapeID : SubShapeID, position : RVec3) -> Vec3 #foreign JoltC "JPH_Body_GetWorldSpaceSurfaceNormal";
+    GetTransformedShape :: (body : *Body) -> TransformedShape #foreign JoltC "JPH_Body_GetTransformedShape";
     GetBodyCreationSettings :: (body : *Body) -> BodyCreationSettings #foreign JoltC "JPH_Body_GetBodyCreationSettings";
     ApplyBodyCreationSettings :: (body : *Body, bodyCreationSettings : *BodyCreationSettings, bplInterface : *BroadPhaseLayerInterface) -> void #foreign JoltC "JPH_Body_ApplyBodyCreationSettings";
     GetSoftBodyCreationSettings :: (body : *Body) -> SoftBodyCreationSettings #foreign JoltC "JPH_Body_GetSoftBodyCreationSettings";
@@ -1414,6 +1415,7 @@ BodyInterface :: struct {
     GetPointVelocity :: (bodyInterface : *BodyInterface, bodyID : BodyID, point : RVec3) -> Vec3 #foreign JoltC "JPH_BodyInterface_GetPointVelocity";
     SetPositionRotationAndVelocity :: (bodyInterface : *BodyInterface, bodyID : BodyID, position : RVec3, rotation : Quat, linearVelocity : Vec3, angularVelocity : Vec3) -> void #foreign JoltC "JPH_BodyInterface_SetPositionRotationAndVelocity";
     GetInverseInertia :: (bodyInterface : *BodyInterface, bodyID : BodyID) -> Mat44 #foreign JoltC "JPH_BodyInterface_GetInverseInertia";
+    GetTransformedShape :: (bodyInterface : *BodyInterface, bodyID : BodyID) -> TransformedShape #foreign JoltC "JPH_BodyInterface_GetTransformedShape";
     GetUserData :: (bodyInterface : *BodyInterface, bodyID : BodyID) -> u64 #foreign JoltC "JPH_BodyInterface_GetUserData";
     SetUserData :: (bodyInterface : *BodyInterface, bodyID : BodyID, userData : u64) -> void #foreign JoltC "JPH_BodyInterface_SetUserData";
     GetMaterial :: (bodyInterface : *BodyInterface, bodyID : BodyID, subShapeID : SubShapeID) -> *PhysicsMaterial #foreign JoltC "JPH_BodyInterface_GetMaterial";
