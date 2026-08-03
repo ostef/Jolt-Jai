@@ -112,7 +112,7 @@ GenerateBindings :: (options : JoltCompileOptions) -> bool {
         working_dir := get_working_directory();
         defer set_working_directory(working_dir);
 
-        set_working_directory(tprint("%/Source/JoltC-BindGen", working_dir));
+        set_working_directory(tprint("%/Source/JoltC-BindGen", #filepath));
 
         if run_command("cmake", "-B", ".build").exit_code != 0 {
             return false;
@@ -123,7 +123,11 @@ GenerateBindings :: (options : JoltCompileOptions) -> bool {
         }
 
         bindgen : [..]string;
-        array_add(*bindgen, ".build/joltc-bindgen");
+        #if OS == .WINDOWS {
+            array_add(*bindgen, ".build/Debug/joltc-bindgen");
+        } else {
+            array_add(*bindgen, ".build/joltc-bindgen");
+        }
         array_add(*bindgen, "../JoltC/JoltC.h");
         array_add(*bindgen, "-l", "jai");
         array_add(*bindgen, "-I", "../JoltC");
@@ -184,7 +188,7 @@ BuildJoltC :: (options : JoltCompileOptions) -> bool {
         working_dir := get_working_directory();
         defer set_working_directory(working_dir);
 
-        set_working_directory(tprint("%/Source/JoltC", working_dir));
+        set_working_directory(tprint("%/Source/JoltC", #filepath));
 
         configure : [..]string;
         array_add(*configure, "cmake", "-B", ".build");
