@@ -1333,115 +1333,180 @@ RShapeCast :: struct {
     shapeWorldBounds : AABox;
 }
 
-CollisionCollector_BodyID_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, BodyID) -> void #c_call;
-}
-
-CollisionCollector_BroadPhaseCastResult_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, BroadPhaseCastResult) -> void #c_call;
-}
-
-CollisionCollector_RayCastResult_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, RayCastResult) -> void #c_call;
-}
-
-CollisionCollector_ShapeCastResult_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, ShapeCastResult) -> void #c_call;
-}
-
-CollisionCollector_CollidePointResult_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, CollidePointResult) -> void #c_call;
-}
-
-CollisionCollector_CollideShapeResult_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, CollideShapeResult) -> void #c_call;
-}
-
-CollisionCollector_TransformedShape_Funcs :: struct {
-    Destruct : #type (*void) -> void #c_call;
-    Reset : #type (*void) -> void #c_call;
-    OnBody : #type (*void, *Body) -> void #c_call;
-    OnBodyEnd : #type (*void) -> void #c_call;
-    SetUserData : #type (*void, u64) -> void #c_call;
-    AddHit : #type (*void, TransformedShape) -> void #c_call;
-}
-
 RayCastBodyCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_BroadPhaseCastResult_Funcs, allocator : JoltCAllocator) -> *RayCastBodyCollector #foreign JoltC "JPH_RayCastBodyCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*RayCastBodyCollector, *void) -> void #c_call;
+        Reset : #type (*RayCastBodyCollector, *void) -> void #c_call;
+        OnBody : #type (*RayCastBodyCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*RayCastBodyCollector, *void) -> void #c_call;
+        SetUserData : #type (*RayCastBodyCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*RayCastBodyCollector, *void, BroadPhaseCastResult) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : RayCastBodyCollector.Funcs, allocator : JoltCAllocator) -> *RayCastBodyCollector #foreign JoltC "JPH_RayCastBodyCollector_Create";
 
     Destroy :: (self : *RayCastBodyCollector) -> void #foreign JoltC "JPH_RayCastBodyCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *RayCastBodyCollector, fraction : float) -> void #foreign JoltC "JPH_RayCastBodyCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *RayCastBodyCollector, fraction : float) -> void #foreign JoltC "JPH_RayCastBodyCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *RayCastBodyCollector) -> float #foreign JoltC "JPH_RayCastBodyCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *RayCastBodyCollector) -> float #foreign JoltC "JPH_RayCastBodyCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *RayCastBodyCollector) -> void #foreign JoltC "JPH_RayCastBodyCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *RayCastBodyCollector) -> void #foreign JoltC "JPH_RayCastBodyCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *RayCastBodyCollector) -> bool #foreign JoltC "JPH_RayCastBodyCollector_ShouldEarlyOut";
 }
 
 CastShapeBodyCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_BroadPhaseCastResult_Funcs, allocator : JoltCAllocator) -> *CastShapeBodyCollector #foreign JoltC "JPH_CastShapeBodyCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*CastShapeBodyCollector, *void) -> void #c_call;
+        Reset : #type (*CastShapeBodyCollector, *void) -> void #c_call;
+        OnBody : #type (*CastShapeBodyCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*CastShapeBodyCollector, *void) -> void #c_call;
+        SetUserData : #type (*CastShapeBodyCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*CastShapeBodyCollector, *void, BroadPhaseCastResult) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CastShapeBodyCollector.Funcs, allocator : JoltCAllocator) -> *CastShapeBodyCollector #foreign JoltC "JPH_CastShapeBodyCollector_Create";
 
     Destroy :: (self : *CastShapeBodyCollector) -> void #foreign JoltC "JPH_CastShapeBodyCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *CastShapeBodyCollector, fraction : float) -> void #foreign JoltC "JPH_CastShapeBodyCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *CastShapeBodyCollector, fraction : float) -> void #foreign JoltC "JPH_CastShapeBodyCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *CastShapeBodyCollector) -> float #foreign JoltC "JPH_CastShapeBodyCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *CastShapeBodyCollector) -> float #foreign JoltC "JPH_CastShapeBodyCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *CastShapeBodyCollector) -> void #foreign JoltC "JPH_CastShapeBodyCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *CastShapeBodyCollector) -> void #foreign JoltC "JPH_CastShapeBodyCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *CastShapeBodyCollector) -> bool #foreign JoltC "JPH_CastShapeBodyCollector_ShouldEarlyOut";
 }
 
 CollideShapeBodyCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_BodyID_Funcs, allocator : JoltCAllocator) -> *CollideShapeBodyCollector #foreign JoltC "JPH_CollideShapeBodyCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*CollideShapeBodyCollector, *void) -> void #c_call;
+        Reset : #type (*CollideShapeBodyCollector, *void) -> void #c_call;
+        OnBody : #type (*CollideShapeBodyCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*CollideShapeBodyCollector, *void) -> void #c_call;
+        SetUserData : #type (*CollideShapeBodyCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*CollideShapeBodyCollector, *void, BodyID) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CollideShapeBodyCollector.Funcs, allocator : JoltCAllocator) -> *CollideShapeBodyCollector #foreign JoltC "JPH_CollideShapeBodyCollector_Create";
 
     Destroy :: (self : *CollideShapeBodyCollector) -> void #foreign JoltC "JPH_CollideShapeBodyCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *CollideShapeBodyCollector, fraction : float) -> void #foreign JoltC "JPH_CollideShapeBodyCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *CollideShapeBodyCollector, fraction : float) -> void #foreign JoltC "JPH_CollideShapeBodyCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *CollideShapeBodyCollector) -> float #foreign JoltC "JPH_CollideShapeBodyCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *CollideShapeBodyCollector) -> float #foreign JoltC "JPH_CollideShapeBodyCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *CollideShapeBodyCollector) -> void #foreign JoltC "JPH_CollideShapeBodyCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *CollideShapeBodyCollector) -> void #foreign JoltC "JPH_CollideShapeBodyCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *CollideShapeBodyCollector) -> bool #foreign JoltC "JPH_CollideShapeBodyCollector_ShouldEarlyOut";
 }
 
 CastRayCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_RayCastResult_Funcs, allocator : JoltCAllocator) -> *CastRayCollector #foreign JoltC "JPH_CastRayCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*CastRayCollector, *void) -> void #c_call;
+        Reset : #type (*CastRayCollector, *void) -> void #c_call;
+        OnBody : #type (*CastRayCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*CastRayCollector, *void) -> void #c_call;
+        SetUserData : #type (*CastRayCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*CastRayCollector, *void, RayCastResult) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CastRayCollector.Funcs, allocator : JoltCAllocator) -> *CastRayCollector #foreign JoltC "JPH_CastRayCollector_Create";
 
     Destroy :: (self : *CastRayCollector) -> void #foreign JoltC "JPH_CastRayCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *CastRayCollector, fraction : float) -> void #foreign JoltC "JPH_CastRayCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *CastRayCollector, fraction : float) -> void #foreign JoltC "JPH_CastRayCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *CastRayCollector) -> float #foreign JoltC "JPH_CastRayCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *CastRayCollector) -> float #foreign JoltC "JPH_CastRayCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *CastRayCollector) -> void #foreign JoltC "JPH_CastRayCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *CastRayCollector) -> void #foreign JoltC "JPH_CastRayCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *CastRayCollector) -> bool #foreign JoltC "JPH_CastRayCollector_ShouldEarlyOut";
 }
 
 CastShapeCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_ShapeCastResult_Funcs, allocator : JoltCAllocator) -> *CastShapeCollector #foreign JoltC "JPH_CastShapeCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*CastShapeCollector, *void) -> void #c_call;
+        Reset : #type (*CastShapeCollector, *void) -> void #c_call;
+        OnBody : #type (*CastShapeCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*CastShapeCollector, *void) -> void #c_call;
+        SetUserData : #type (*CastShapeCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*CastShapeCollector, *void, ShapeCastResult) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CastShapeCollector.Funcs, allocator : JoltCAllocator) -> *CastShapeCollector #foreign JoltC "JPH_CastShapeCollector_Create";
 
     Destroy :: (self : *CastShapeCollector) -> void #foreign JoltC "JPH_CastShapeCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *CastShapeCollector, fraction : float) -> void #foreign JoltC "JPH_CastShapeCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *CastShapeCollector, fraction : float) -> void #foreign JoltC "JPH_CastShapeCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *CastShapeCollector) -> float #foreign JoltC "JPH_CastShapeCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *CastShapeCollector) -> float #foreign JoltC "JPH_CastShapeCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *CastShapeCollector) -> void #foreign JoltC "JPH_CastShapeCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *CastShapeCollector) -> void #foreign JoltC "JPH_CastShapeCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *CastShapeCollector) -> bool #foreign JoltC "JPH_CastShapeCollector_ShouldEarlyOut";
 }
 
 CollidePointCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_CollidePointResult_Funcs, allocator : JoltCAllocator) -> *CollidePointCollector #foreign JoltC "JPH_CollidePointCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*CollidePointCollector, *void) -> void #c_call;
+        Reset : #type (*CollidePointCollector, *void) -> void #c_call;
+        OnBody : #type (*CollidePointCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*CollidePointCollector, *void) -> void #c_call;
+        SetUserData : #type (*CollidePointCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*CollidePointCollector, *void, CollidePointResult) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CollidePointCollector.Funcs, allocator : JoltCAllocator) -> *CollidePointCollector #foreign JoltC "JPH_CollidePointCollector_Create";
 
     Destroy :: (self : *CollidePointCollector) -> void #foreign JoltC "JPH_CollidePointCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *CollidePointCollector, fraction : float) -> void #foreign JoltC "JPH_CollidePointCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *CollidePointCollector, fraction : float) -> void #foreign JoltC "JPH_CollidePointCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *CollidePointCollector) -> float #foreign JoltC "JPH_CollidePointCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *CollidePointCollector) -> float #foreign JoltC "JPH_CollidePointCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *CollidePointCollector) -> void #foreign JoltC "JPH_CollidePointCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *CollidePointCollector) -> void #foreign JoltC "JPH_CollidePointCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *CollidePointCollector) -> bool #foreign JoltC "JPH_CollidePointCollector_ShouldEarlyOut";
 }
 
 CollideShapeCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_CollideShapeResult_Funcs, allocator : JoltCAllocator) -> *CollideShapeCollector #foreign JoltC "JPH_CollideShapeCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*CollideShapeCollector, *void) -> void #c_call;
+        Reset : #type (*CollideShapeCollector, *void) -> void #c_call;
+        OnBody : #type (*CollideShapeCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*CollideShapeCollector, *void) -> void #c_call;
+        SetUserData : #type (*CollideShapeCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*CollideShapeCollector, *void, CollideShapeResult) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : CollideShapeCollector.Funcs, allocator : JoltCAllocator) -> *CollideShapeCollector #foreign JoltC "JPH_CollideShapeCollector_Create";
 
     Destroy :: (self : *CollideShapeCollector) -> void #foreign JoltC "JPH_CollideShapeCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *CollideShapeCollector, fraction : float) -> void #foreign JoltC "JPH_CollideShapeCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *CollideShapeCollector, fraction : float) -> void #foreign JoltC "JPH_CollideShapeCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *CollideShapeCollector) -> float #foreign JoltC "JPH_CollideShapeCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *CollideShapeCollector) -> float #foreign JoltC "JPH_CollideShapeCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *CollideShapeCollector) -> void #foreign JoltC "JPH_CollideShapeCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *CollideShapeCollector) -> void #foreign JoltC "JPH_CollideShapeCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *CollideShapeCollector) -> bool #foreign JoltC "JPH_CollideShapeCollector_ShouldEarlyOut";
 }
 
 TransformedShapeCollector :: struct {
-    Create :: (data : *void, funcs : CollisionCollector_TransformedShape_Funcs, allocator : JoltCAllocator) -> *TransformedShapeCollector #foreign JoltC "JPH_TransformedShapeCollector_Create";
+    Funcs :: struct {
+        Destruct : #type (*TransformedShapeCollector, *void) -> void #c_call;
+        Reset : #type (*TransformedShapeCollector, *void) -> void #c_call;
+        OnBody : #type (*TransformedShapeCollector, *void, *Body) -> void #c_call;
+        OnBodyEnd : #type (*TransformedShapeCollector, *void) -> void #c_call;
+        SetUserData : #type (*TransformedShapeCollector, *void, u64) -> void #c_call;
+        AddHit : #type (*TransformedShapeCollector, *void, TransformedShape) -> void #c_call;
+    }
+
+    Create :: (data : *void, funcs : TransformedShapeCollector.Funcs, allocator : JoltCAllocator) -> *TransformedShapeCollector #foreign JoltC "JPH_TransformedShapeCollector_Create";
 
     Destroy :: (self : *TransformedShapeCollector) -> void #foreign JoltC "JPH_TransformedShapeCollector_Destroy";
+    UpdateEarlyOutFraction :: (collector : *TransformedShapeCollector, fraction : float) -> void #foreign JoltC "JPH_TransformedShapeCollector_UpdateEarlyOutFraction";
+    SetEarlyOutFraction :: (collector : *TransformedShapeCollector, fraction : float) -> void #foreign JoltC "JPH_TransformedShapeCollector_SetEarlyOutFraction";
+    GetEarlyOutFraction :: (collector : *TransformedShapeCollector) -> float #foreign JoltC "JPH_TransformedShapeCollector_GetEarlyOutFraction";
+    GetPositiveEarlyOutFraction :: (collector : *TransformedShapeCollector) -> float #foreign JoltC "JPH_TransformedShapeCollector_GetPositiveEarlyOutFraction";
+    ResetEarlyOutFraction :: (collector : *TransformedShapeCollector) -> void #foreign JoltC "JPH_TransformedShapeCollector_ResetEarlyOutFraction";
+    ForceEarlyOut :: (collector : *TransformedShapeCollector) -> void #foreign JoltC "JPH_TransformedShapeCollector_ForceEarlyOut";
+    ShouldEarlyOut :: (collector : *TransformedShapeCollector) -> bool #foreign JoltC "JPH_TransformedShapeCollector_ShouldEarlyOut";
 }
 
 BodyInterface :: struct {
