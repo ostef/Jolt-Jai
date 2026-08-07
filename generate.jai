@@ -46,7 +46,7 @@ JoltCompileOptions :: enum_flags {
             compile_options &= ~(.BuildTypeRelease | .BuildTypeDistribution);
             compile_options |= .BuildTypeDebug;
         case "build_release";
-            compile_options &= ~(.BuildTypeRelease | .BuildTypeDistribution);
+            compile_options &= ~(.BuildTypeDebug | .BuildTypeDistribution);
             compile_options |= .BuildTypeRelease;
         case "build_distribution";
             compile_options &= ~(.BuildTypeDebug | .BuildTypeRelease);
