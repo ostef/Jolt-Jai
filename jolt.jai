@@ -437,6 +437,9 @@ Shape :: struct {
     IsValidScale :: (shape : *Shape, scale : Vec3) -> bool #foreign JoltC "JPH_Shape_IsValidScale";
     MakeScaleValid :: (shape : *Shape, scale : Vec3) -> Vec3 #foreign JoltC "JPH_Shape_MakeScaleValid";
     ScaleShape :: (shape : *Shape, scale : Vec3) -> *Shape #foreign JoltC "JPH_Shape_ScaleShape";
+    Draw :: (shape : *Shape, renderer : *DebugRenderer, centerOfMassTransform : RMat44, scale : Vec3, color : Color, useMaterialColors : bool, drawWireframe : bool) -> void #foreign JoltC "JPH_Shape_Draw";
+    DrawGetSupportFunction :: (shape : *Shape, renderer : *DebugRenderer, centerOfMassTransform : RMat44, scale : Vec3, color : Color, drawSupportDirection : bool) -> void #foreign JoltC "JPH_Shape_DrawGetSupportFunction";
+    DrawGetSupportingFace :: (shape : *Shape, renderer : *DebugRenderer, centerOfMassTransform : RMat44, scale : Vec3) -> void #foreign JoltC "JPH_Shape_DrawGetSupportingFace";
 }
 
 ShapeSettings :: struct {
