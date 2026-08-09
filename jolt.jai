@@ -701,6 +701,8 @@ EmptyShape :: struct {
 PlaneShape :: struct {
     #as using,except(base) base : Shape;
 
+    Create :: (plane : Plane, material : *PhysicsMaterial, halfExtent : float) -> *PlaneShape #foreign JoltC "JPH_PlaneShape_Create";
+
     GetPlane :: (shape : *PlaneShape) -> Plane #foreign JoltC "JPH_PlaneShape_GetPlane";
     GetHalfExtent :: (shape : *PlaneShape) -> float #foreign JoltC "JPH_PlaneShape_GetHalfExtent";
     SetMaterial :: (shape : *PlaneShape, material : *PhysicsMaterial) -> void #foreign JoltC "JPH_PlaneShape_SetMaterial";
@@ -742,11 +744,15 @@ ConvexShape :: struct {
 SphereShape :: struct {
     #as using,except(base) base : ConvexShape;
 
+    Create :: (radius : float, material : *PhysicsMaterial) -> *SphereShape #foreign JoltC "JPH_SphereShape_Create";
+
     GetRadius :: (shape : *SphereShape) -> float #foreign JoltC "JPH_SphereShape_GetRadius";
 }
 
 BoxShape :: struct {
     #as using,except(base) base : ConvexShape;
+
+    Create :: (halfExtent : Vec3, convexRadius : float, material : *PhysicsMaterial) -> *BoxShape #foreign JoltC "JPH_BoxShape_Create";
 
     GetHalfExtent :: (shape : *BoxShape) -> Vec3 #foreign JoltC "JPH_BoxShape_GetHalfExtent";
     GetConvexRadius :: (shape : *BoxShape) -> float #foreign JoltC "JPH_BoxShape_GetConvexRadius";
@@ -754,6 +760,8 @@ BoxShape :: struct {
 
 TriangleShape :: struct {
     #as using,except(base) base : ConvexShape;
+
+    Create :: (v1 : Vec3, v2 : Vec3, v3 : Vec3, convexRadius : float, material : *PhysicsMaterial) -> *TriangleShape #foreign JoltC "JPH_TriangleShape_Create";
 
     GetVertex1 :: (shape : *TriangleShape) -> Vec3 #foreign JoltC "JPH_TriangleShape_GetVertex1";
     GetVertex2 :: (shape : *TriangleShape) -> Vec3 #foreign JoltC "JPH_TriangleShape_GetVertex2";
@@ -764,6 +772,8 @@ TriangleShape :: struct {
 
 CapsuleShape :: struct {
     #as using,except(base) base : ConvexShape;
+
+    Create :: (halfHeightOfCylinder : float, radius : float, material : *PhysicsMaterial) -> *CapsuleShape #foreign JoltC "JPH_CapsuleShape_Create";
 
     GetRadius :: (shape : *CapsuleShape) -> float #foreign JoltC "JPH_CapsuleShape_GetRadius";
     GetHalfHeightOfCylinder :: (shape : *CapsuleShape) -> float #foreign JoltC "JPH_CapsuleShape_GetHalfHeightOfCylinder";
@@ -779,6 +789,8 @@ TaperedCapsuleShape :: struct {
 
 CylinderShape :: struct {
     #as using,except(base) base : ConvexShape;
+
+    Create :: (halfHeight : float, radius : float, convexRadius : float, material : *PhysicsMaterial) -> *CylinderShape #foreign JoltC "JPH_CylinderShape_Create";
 
     GetHalfHeight :: (shape : *CylinderShape) -> float #foreign JoltC "JPH_CylinderShape_GetHalfHeight";
     GetRadius :: (shape : *CylinderShape) -> float #foreign JoltC "JPH_CylinderShape_GetRadius";
@@ -841,6 +853,8 @@ DecoratedShape :: struct {
 RotatedTranslatedShape :: struct {
     #as using,except(base) base : DecoratedShape;
 
+    Create :: (position : Vec3, rotation : Quat, shape : *Shape) -> *RotatedTranslatedShape #foreign JoltC "JPH_RotatedTranslatedShape_Create";
+
     GetRotation :: (shape : *RotatedTranslatedShape) -> Quat #foreign JoltC "JPH_RotatedTranslatedShape_GetRotation";
     GetPosition :: (shape : *RotatedTranslatedShape) -> Vec3 #foreign JoltC "JPH_RotatedTranslatedShape_GetPosition";
     TransformScale :: (shape : *RotatedTranslatedShape, scale : Vec3) -> Vec3 #foreign JoltC "JPH_RotatedTranslatedShape_TransformScale";
@@ -849,11 +863,15 @@ RotatedTranslatedShape :: struct {
 ScaledShape :: struct {
     #as using,except(base) base : DecoratedShape;
 
+    Create :: (shape : *Shape, scale : Vec3) -> *ScaledShape #foreign JoltC "JPH_ScaledShape_Create";
+
     GetScale :: (shape : *ScaledShape) -> Vec3 #foreign JoltC "JPH_ScaledShape_GetScale";
 }
 
 OffsetCenterOfMassShape :: struct {
     #as using,except(base) base : DecoratedShape;
+
+    Create :: (shape : *Shape, offset : Vec3) -> *OffsetCenterOfMassShape #foreign JoltC "JPH_OffsetCenterOfMassShape_Create";
 
     GetOffset :: (shape : *OffsetCenterOfMassShape) -> Vec3 #foreign JoltC "JPH_OffsetCenterOfMassShape_GetOffset";
 }
