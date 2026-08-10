@@ -410,6 +410,7 @@ Shape :: struct {
 
     opaque : s8;
 
+    Destroy :: (shape : *Shape) -> void #foreign JoltC "JPH_Shape_Destroy";
     AddRef :: (shape : *Shape) -> void #foreign JoltC "JPH_Shape_AddRef";
     Release :: (shape : *Shape) -> void #foreign JoltC "JPH_Shape_Release";
     GetRefCount :: (shape : *Shape) -> u32 #foreign JoltC "JPH_Shape_GetRefCount";
