@@ -430,9 +430,10 @@ Shape :: struct {
     GetSurfaceNormal :: (shape : *Shape, subShapeID : SubShapeID, localSurfacePosition : Vec3) -> Vec3 #foreign JoltC "JPH_Shape_GetSurfaceNormal";
     GetSupportingFace :: (shape : *Shape, subShapeID : SubShapeID, direction : Vec3, scale : Vec3, centerOfMassTransform : Mat44, outVertices : *Shape.SupportingFace) -> void #foreign JoltC "JPH_Shape_GetSupportingFace";
     GetSubShapeUserData :: (shape : *Shape, subShapeID : SubShapeID) -> u64 #foreign JoltC "JPH_Shape_GetSubShapeUserData";
+    GetSubShapeTransformedShape :: (shape : *Shape, subShapeID : SubShapeID, positionCOM : Vec3, rotation : Quat, scale : Vec3, remainder : *SubShapeID) -> TransformedShape #foreign JoltC "JPH_Shape_GetSubShapeTransformedShape";
     GetSubmergedVolume :: (shape : *Shape, centerOfMassTransform : Mat44, scale : Vec3, surface : Plane, outTotalVolume : *float, outSubmergedVolume : *float, outCenterOfBuoyancy : *Vec3) -> void #foreign JoltC "JPH_Shape_GetSubmergedVolume";
     GetTrianglesStart :: (shape : *Shape, ioContext : *Shape.GetTrianglesContext, box : AABox, positionCOM : Vec3, rotation : Quat, scale : Vec3) -> void #foreign JoltC "JPH_Shape_GetTrianglesStart";
-    GetTrianglesNext :: (shape : *Shape, ioContext : *Shape.GetTrianglesContext, maxTrianglesRequested : u32, outTriangleVertices : *Float3, outMaterials : **PhysicsMaterial) -> u32 #foreign JoltC "JPH_Shape_GetTrianglesNext";
+    GetTrianglesNext :: (shape : *Shape, ioContext : *Shape.GetTrianglesContext, maxTrianglesRequested : s32, outTriangleVertices : *Float3, outMaterials : **PhysicsMaterial) -> s32 #foreign JoltC "JPH_Shape_GetTrianglesNext";
     GetStats :: (shape : *Shape) -> Shape.Stats #foreign JoltC "JPH_Shape_GetStats";
     GetVolume :: (shape : *Shape) -> float #foreign JoltC "JPH_Shape_GetVolume";
     IsValidScale :: (shape : *Shape, scale : Vec3) -> bool #foreign JoltC "JPH_Shape_IsValidScale";
@@ -877,20 +878,6 @@ OffsetCenterOfMassShape :: struct {
     GetOffset :: (shape : *OffsetCenterOfMassShape) -> Vec3 #foreign JoltC "JPH_OffsetCenterOfMassShape_GetOffset";
 }
 
-MassProperties :: struct {
-    mass : float;
-    inertia : Mat44;
-
-    GetEquivalentSolidBoxSize :: (mass : float, inertiaDiagonal : Vec3) -> Vec3 #foreign JoltC "JPH_MassProperties_GetEquivalentSolidBoxSize";
-
-    DecomposePrincipalMomentsOfInertia :: (massProperties : *MassProperties, outRotation : *Mat44, outDiagonal : *Vec3) -> bool #foreign JoltC "JPH_MassProperties_DecomposePrincipalMomentsOfInertia";
-    SetMassAndInertiaOfSolidBox :: (massProperties : *MassProperties, boxSize : Vec3, density : float) -> void #foreign JoltC "JPH_MassProperties_SetMassAndInertiaOfSolidBox";
-    ScaleToMass :: (massProperties : *MassProperties, mass : float) -> void #foreign JoltC "JPH_MassProperties_ScaleToMass";
-    Rotate :: (massProperties : *MassProperties, rotation : Mat44) -> void #foreign JoltC "JPH_MassProperties_Rotate";
-    Translate :: (massProperties : *MassProperties, translation : Vec3) -> void #foreign JoltC "JPH_MassProperties_Translate";
-    Scale :: (massProperties : *MassProperties, scale : Vec3) -> void #foreign JoltC "JPH_MassProperties_Scale";
-}
-
 SubShapeIDCreator :: struct {
     id : SubShapeID;
     currentBit : u32;
@@ -903,6 +890,20 @@ TransformedShape :: struct {
     shapeScale : Float3;
     bodyID : BodyID;
     subShapeIDCreator : SubShapeIDCreator;
+}
+
+MassProperties :: struct {
+    mass : float;
+    inertia : Mat44;
+
+    GetEquivalentSolidBoxSize :: (mass : float, inertiaDiagonal : Vec3) -> Vec3 #foreign JoltC "JPH_MassProperties_GetEquivalentSolidBoxSize";
+
+    DecomposePrincipalMomentsOfInertia :: (massProperties : *MassProperties, outRotation : *Mat44, outDiagonal : *Vec3) -> bool #foreign JoltC "JPH_MassProperties_DecomposePrincipalMomentsOfInertia";
+    SetMassAndInertiaOfSolidBox :: (massProperties : *MassProperties, boxSize : Vec3, density : float) -> void #foreign JoltC "JPH_MassProperties_SetMassAndInertiaOfSolidBox";
+    ScaleToMass :: (massProperties : *MassProperties, mass : float) -> void #foreign JoltC "JPH_MassProperties_ScaleToMass";
+    Rotate :: (massProperties : *MassProperties, rotation : Mat44) -> void #foreign JoltC "JPH_MassProperties_Rotate";
+    Translate :: (massProperties : *MassProperties, translation : Vec3) -> void #foreign JoltC "JPH_MassProperties_Translate";
+    Scale :: (massProperties : *MassProperties, scale : Vec3) -> void #foreign JoltC "JPH_MassProperties_Scale";
 }
 
 Body :: struct {
