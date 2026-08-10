@@ -2606,6 +2606,10 @@ CharacterContactListener :: struct {
 
 // Functions
 
+Color_FromFloats :: (r : float, g : float, b : float, a : float) -> Color #foreign JoltC "JPH_Color_FromFloats";
+Color_FromVec4 :: (v : Vec4) -> Color #foreign JoltC "JPH_Color_FromVec4";
+Color_FromU8s :: (r : u8, g : u8, b : u8, a : u8) -> Color #foreign JoltC "JPH_Color_FromU8s";
+Color_ToVec4 :: (color : Color) -> Vec4 #foreign JoltC "JPH_Color_ToVec4";
 DegreesToRadians :: (degrees : float) -> float #foreign JoltC "JPH_DegreesToRadians";
 RadiansToDegrees :: (radians : float) -> float #foreign JoltC "JPH_RadiansToDegrees";
 RegisterDefaultAllocator :: () -> void #foreign JoltC "JPH_RegisterDefaultAllocator";
